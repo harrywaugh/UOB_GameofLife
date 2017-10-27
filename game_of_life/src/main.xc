@@ -7,6 +7,8 @@
 #include "pgmIO.h"
 #include "i2c.h"
 
+// CHANGED THIS
+
 #define  IMHT 16                  //image height
 #define  IMWD 16                  //image width
 
