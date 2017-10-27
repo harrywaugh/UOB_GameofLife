@@ -9,6 +9,8 @@
 
 // CHANGED THIS
 
+// ADDED THIS AS WELL
+
 #define  IMHT 16                  //image height
 #define  IMWD 16                  //image width
 
