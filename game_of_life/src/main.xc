@@ -69,6 +69,52 @@ void DataInStream(char infname[], chanend c_out)
 // Currently the function just inverts the image
 //
 /////////////////////////////////////////////////////////////////////////////////////////
+int countNeighbours(int x, int y, uchar matrix[IMHT][IMWD])
+{
+    int count = 0;
+    for (int i = IMHT - 1; i < IMHT + 2; i++)
+    {
+        for (int j = IMWD -1; j < IMWD + 2; j++)
+        {
+            if(matrix[(x + i)%IMHT][(y + j)%IMWD] == 255)
+            {
+                count++;
+            }
+        }
+    }
+    if(matrix[x][y] == 255){
+        count--;
+    }
+    return count;
+}
+
+
+
+void gameOfLife(uchar matrix[IMHT][IMWD])
+{
+    uchar oldMatrix[IMHT][IMWD];
+    for( int y = 0; y < IMHT; y++ ) {   //go through all lines
+          for( int x = 0; x < IMWD; x++ )   oldMatrix[y][x] = matrix[y][x];
+    }
+
+    for( int y = 0; y < IMHT; y++ ) {   //go through all lines
+              for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
+                  int neighbourCount;
+                  neighbourCount = countNeighbours(x, y, oldMatrix);
+                  if(oldMatrix[y][x] == 255){
+                      if(neighbourCount != 2 && neighbourCount != 3) matrix[y][x] = 0;
+                  }else{
+                      if(neighbourCount == 3) matrix[y][x] = 255;
+                  }
+              }
+        }
+}
+
+
+
+
+
+
 void distributor(chanend c_in, chanend c_out, chanend fromAcc)
 {
   uchar val;
@@ -82,14 +128,26 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
   //This just inverts every pixel, but you should
   //change the image according to the "Game of Life"
   printf( "Processing...\n" );
+  uchar matrix[IMHT][IMWD];
+
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
     for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
-      c_in :> val;                    //read the pixel value
-      c_out <: ((uchar)( val ^ 0xFF )); //send some modified pixel out
+      matrix[y][x] = 0;
+      c_in :> matrix[y][x];                    //read the pixel value
     }
+  }
+  //gameOfLife(matrix);
+  for( int y = 0; y < IMHT; y++ ) {   //go through all lines
+      for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
+
+        c_out <: ((uchar)( matrix[y][x] ^ 0xFF )); //send some modified pixel out
+      }
   }
   printf( "\nOne processing round completed...\n" );
 }
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
