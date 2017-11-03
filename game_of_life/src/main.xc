@@ -70,20 +70,23 @@ void DataInStream(char infname[], chanend c_out)
 // Currently the function just inverts the image
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-int countNeighbours(int x, int y, uchar matrix[IMHT][IMWD])
+int countNeighbours(int x, int y, uchar matrix[IMHT][IMWD/8])
 {
     int count = 0;
+    uchar mask;
     for (int i = IMHT - 1; i < IMHT + 2; i++)
     {
         for (int j = IMWD -1; j < IMWD + 2; j++)
         {
-            if(matrix[(y + i)%IMHT][(x + j)%IMWD] == 255)
+            mask = (uchar)pow(2, (x+j)%8);
+            if((matrix[(y + i)%IMHT][((x+j)%IMWD)/8] & mask) == mask)
             {
                 count++;
             }
         }
     }
-    if(matrix[y][x] == 255){
+    mask = (uchar)pow(2, x%8);
+    if((matrix[y][x/8]& mask) == mask ){
         count--;
     }
     return count;
@@ -91,21 +94,23 @@ int countNeighbours(int x, int y, uchar matrix[IMHT][IMWD])
 
 
 
-void gameOfLife(uchar matrix[IMHT][IMWD])
+void gameOfLife(uchar matrix[IMHT][IMWD/8])
 {
-    uchar oldMatrix[IMHT][IMWD];
+    uchar mask;
+    uchar oldMatrix[IMHT][IMWD/8];
     for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-          for( int x = 0; x < IMWD; x++ )   oldMatrix[y][x] = matrix[y][x];
+          for( int x = 0; x < IMWD/8; x++ )   oldMatrix[y][x] = matrix[y][x];
     }
 
     for( int y = 0; y < IMHT; y++ ) {   //go through all lines
               for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
                   int neighbourCount;
                   neighbourCount = countNeighbours(x, y, oldMatrix);
-                  if(oldMatrix[y][x] == 255){ // if alive
-                      if(neighbourCount != 2 && neighbourCount != 3) matrix[y][x] = 0;
+                  mask = (uchar) pow(2, x%8);
+                  if((oldMatrix[y][x/8] & mask) == mask){ // if alive
+                      if(neighbourCount != 2 && neighbourCount != 3) matrix[y][x/8] = matrix[y][x/8] ^ mask;
                   }else{ // if dead
-                      if(neighbourCount == 3) matrix[y][x] = 255;
+                      if(neighbourCount == 3) matrix[y][x/8] = matrix[y][x/8] | mask;
                   }
               }
         }
@@ -153,18 +158,13 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc) {
   bytesToBits(matrix, list);
 
 
-  for (int i = 0; i < IMHT; i++){
-        for (int j = 0; j < IMWD/8; j++){
-            printf("%hhx ", list[i][j]);
-        }
-        printf("\n");
-    }
-
-  gameOfLife(matrix);
-
+  gameOfLife(list);
+  uchar mask;
   for( int y = 0; y < IMHT; y++ ) {
       for( int x = 0; x < IMWD; x++ ) {
-        c_out <: matrix[y][x];
+          mask = (uchar)pow(2, x%8);
+          if((list[y][x/8] & mask) == mask) c_out <: (uchar)0xff;
+          else c_out <: (uchar)0x00;
       }
   }
   printf( "\nOne processing round completed...\n" );
