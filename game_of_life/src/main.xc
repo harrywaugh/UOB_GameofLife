@@ -121,7 +121,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
 
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
-  printf( "Waiting for Board Tilt...\n" );
+  printf( "Waiting for Board T1w424ilt...\n" );
   fromAcc :> int value;
 
   //Read in and do something with your image values..
@@ -136,7 +136,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc)
       c_in :> matrix[y][x];                    //read the pixel value
     }
   }
-  //gameOfLife(matrix);
+  gameOfLife(matrix);
   for( int y = 0; y < IMHT; y++ ) {   //go through all lines
       for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
 
