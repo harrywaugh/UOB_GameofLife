@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include "pgmIO.h"
 #include "i2c.h"
+#include <math.h>
 
 //BRANCH 3
 
@@ -111,7 +112,23 @@ void gameOfLife(uchar matrix[IMHT][IMWD])
 }
 
 
+void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][IMWD/8]) {
 
+    for (int y = 0; y < IMHT; y++) {
+            for (int x = 0; x < IMWD/8; x++) {
+                bits[y][x] = 0;
+            }
+        }
+
+    for (int y = 0; y < IMHT; y++) {
+        for (int x = 0; x < IMWD; x++) {
+            if (bytes[y][x] == 255) {
+                bits[y][x/8] = bits[y][x/8] | (uchar) pow(2, (x % 8));
+            }
+        }
+    }
+
+}
 
 
 
@@ -123,6 +140,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc) {
 
   printf( "Processing...\n" );
   uchar matrix[IMHT][IMWD];
+  uchar list[IMHT][IMWD/8];
+
 
   for( int y = 0; y < IMHT; y++ ) {
     for( int x = 0; x < IMWD; x++ ) {
@@ -130,6 +149,16 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc) {
       c_in :> matrix[y][x];
     }
   }
+
+  bytesToBits(matrix, list);
+
+
+  for (int i = 0; i < IMHT; i++){
+        for (int j = 0; j < IMWD/8; j++){
+            printf("%hhx ", list[i][j]);
+        }
+        printf("\n");
+    }
 
   gameOfLife(matrix);
 
