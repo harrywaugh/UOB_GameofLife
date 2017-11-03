@@ -76,13 +76,13 @@ int countNeighbours(int x, int y, uchar matrix[IMHT][IMWD])
     {
         for (int j = IMWD -1; j < IMWD + 2; j++)
         {
-            if(matrix[(x + i)%IMHT][(y + j)%IMWD] == 255)
+            if(matrix[(y + i)%IMHT][(x + j)%IMWD] == 255)
             {
                 count++;
             }
         }
     }
-    if(matrix[x][y] == 255){
+    if(matrix[y][x] == 255){
         count--;
     }
     return count;
@@ -101,9 +101,9 @@ void gameOfLife(uchar matrix[IMHT][IMWD])
               for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
                   int neighbourCount;
                   neighbourCount = countNeighbours(x, y, oldMatrix);
-                  if(oldMatrix[y][x] == 255){
+                  if(oldMatrix[y][x] == 255){ // if alive
                       if(neighbourCount != 2 && neighbourCount != 3) matrix[y][x] = 0;
-                  }else{
+                  }else{ // if dead
                       if(neighbourCount == 3) matrix[y][x] = 255;
                   }
               }
@@ -115,32 +115,27 @@ void gameOfLife(uchar matrix[IMHT][IMWD])
 
 
 
-void distributor(chanend c_in, chanend c_out, chanend fromAcc)
-{
-  uchar val;
-
+void distributor(chanend c_in, chanend c_out, chanend fromAcc) {
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
-  printf( "Waiting for Board T1w424ilt...\n" );
+  printf( "Waiting for asdasd Board Tilt...\n" );
   fromAcc :> int value;
 
-  //Read in and do something with your image values..
-  //This just inverts every pixel, but you should
-  //change the image according to the "Game of Life"
   printf( "Processing...\n" );
   uchar matrix[IMHT][IMWD];
 
-  for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-    for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
-      matrix[y][x] = 0;
-      c_in :> matrix[y][x];                    //read the pixel value
+  for( int y = 0; y < IMHT; y++ ) {
+    for( int x = 0; x < IMWD; x++ ) {
+      matrix[y][x] = 255;
+      c_in :> matrix[y][x];
     }
   }
-  gameOfLife(matrix);
-  for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-      for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
 
-        c_out <: ((uchar)( matrix[y][x] ^ 0xFF )); //send some modified pixel out
+  gameOfLife(matrix);
+
+  for( int y = 0; y < IMHT; y++ ) {
+      for( int x = 0; x < IMWD; x++ ) {
+        c_out <: matrix[y][x];
       }
   }
   printf( "\nOne processing round completed...\n" );
