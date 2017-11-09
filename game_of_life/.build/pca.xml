@@ -669,6 +669,12 @@
 <fInfo name="gameOfLife" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="1">
   <arg num="0" specialize="false">
     <values>
+    </values>
+  </arg>
+</fInfo>
+<fInfo name="gameOfLifeV2" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="1">
+  <arg num="0" specialize="false">
+    <values>
       <value type="unknown"/>
     </values>
   </arg>
@@ -1302,7 +1308,7 @@
     </values>
   </arg>
 </fInfo>
-<fInfo name="worker" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="1">
+<fInfo name="worker" global="true" specialize="false" noreturn="true" doNotSpecialize="false" numParams="1">
   <arg num="0" specialize="false">
     <values>
       <value type="unknown"/>

@@ -72,16 +72,19 @@ void DataInStream(char infname[], chanend c_out)
 // Currently the function just inverts the image
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-int countNeighbours(int x, int y, uchar matrix[IMHT][BYTEWIDTH])
+int countNeighbours(int x, int y, uchar matrix[3][2])
 {
+    /////////////////////UPDATE LATER FOR 3*3
+    int IMHT2 = 3;
+    int IMWD2 = 2;
     int count = 0;
     uchar mask;
-    for (int i = IMHT - 1; i < IMHT + 2; i++)
+    for (int i = IMHT2 - 1; i < IMHT2 + 2; i++)
     {
-        for (int j = IMWD -1; j < IMWD + 2; j++)
+        for (int j = IMWD2 -1; j < IMWD2 + 2; j++)
         {
             mask = (uchar)pow(2, (x+j)%8);
-            if((matrix[(y + i)%IMHT][((x+j)%IMWD)/8] & mask) == mask)
+            if((matrix[(y + i)%IMHT2][((x+j)%IMWD)/8] & mask) == mask)
             {
                 count++;
             }
@@ -118,6 +121,31 @@ void gameOfLife(uchar matrix[IMHT][BYTEWIDTH])
         }
 }
 
+void gameOfLifeV2(uchar matrix[3][2])
+{
+    uchar mask;
+    uchar oldMatrix[3][2];
+    for( int y = 0; y < 3; y++ ) {   //go through all lines
+        for( int x = 0; x < 2; x++ )   oldMatrix[y][x] = matrix[y][x];
+    }
+
+    //go through all lines
+    int y = 1;
+    for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
+          int neighbourCount;
+          neighbourCount = countNeighbours(x, y, oldMatrix);
+          mask = (uchar) pow(2, x%8);
+          if((oldMatrix[y][x/8] & mask) == mask){ // if alive
+              if(neighbourCount != 2 && neighbourCount != 3) matrix[y][x/8] = matrix[y][x/8] ^ mask;
+          }else{ // if dead
+              if(neighbourCount == 3) matrix[y][x/8] = matrix[y][x/8] | mask;
+          }
+    }
+}
+
+
+
+
 
 void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
 
@@ -139,18 +167,20 @@ void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
 
 void worker(chanend toDistributer)
 {
-    uchar list[IMHT][BYTEWIDTH];
-    for( int y = 0; y < IMHT; y++ ) {
-        for( int x = 0; x < BYTEWIDTH; x++ ) {
-            toDistributer :> list[y][x];
+    printf("WORKER STARTED\n");
+    while (2==2) {
+        uchar list[3][2];
+        for( int y = 0; y < 3; y++ ) {
+            for( int x = 0; x < 2; x++ ) {
+                toDistributer :> list[y][x];
+            }
         }
-    }
-    gameOfLife(list);
-    for( int y = 0; y < IMHT; y++ ) {
-        for( int x = 0; x < BYTEWIDTH; x++ ) {
-            toDistributer <: list[y][x];
+
+        gameOfLifeV2(list);
+        for( int x = 0; x < 2; x++ ) {
+            toDistributer <: list[1][x];
         }
-    }
+   }
 
 }
 
@@ -163,34 +193,42 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend toWorkers
   printf( "Processing...\n" );
   uchar matrix[IMHT][IMWD];
   uchar list[IMHT][BYTEWIDTH];
+  uchar list2[IMHT][BYTEWIDTH];
 
-
+  /////////////////INPUT
   for( int y = 0; y < IMHT; y++ ) {
     for( int x = 0; x < IMWD; x++ ) {
-      matrix[y][x] = 255;
       c_in :> matrix[y][x];
     }
   }
 
   bytesToBits(matrix, list);
+  /////////////////SEND TO WORKER
+  for(int i = 0; i < IMHT; i++)
+  {
+      toWorkers[0] <: list[(IMHT + i - 1) % IMHT][0];
+      toWorkers[0] <: list[(IMHT + i - 1) % IMHT][1];
+      toWorkers[0] <: list[i][0];
+      toWorkers[0] <: list[i][1];
+      toWorkers[0] <: list[(i + 1) % IMHT][0];
+      toWorkers[0] <: list[(i + 1) % IMHT][1];
 
-  for( int y = 0; y < IMHT; y++ ) {
-      for( int x = 0; x < BYTEWIDTH; x++ ) {
-          toWorkers[0] <: list[y][x];
-      }
+
+      toWorkers[0] :> list2[i][0];
+      toWorkers[0] :> list2[i][1];
   }
 
-  for( int y = 0; y < IMHT; y++ ) {
-      for( int x = 0; x < BYTEWIDTH; x++ ) {
-          toWorkers[0] :> list[y][x];
-      }
-  }
 
+
+
+
+
+  /////////////////OUTPUT
   uchar mask;
   for( int y = 0; y < IMHT; y++ ) {
       for( int x = 0; x < IMWD; x++ ) {
           mask = (uchar)pow(2, x%8);
-          if((list[y][x/8] & mask) == mask) c_out <: (uchar)0xff;
+          if((list2[y][x/8] & mask) == mask) c_out <: (uchar)0xff;
           else c_out <: (uchar)0x00;
       }
   }
