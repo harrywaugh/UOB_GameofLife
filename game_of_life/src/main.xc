@@ -11,7 +11,9 @@
 //BRANCH 3
 
 #define  IMHT 16                  //image height
-#define  IMWD 16                  //image width
+#define  IMWD 16
+#define  BYTEWIDTH 2              //image width
+#define  WORKERS 1
 
 typedef unsigned char uchar;      //using uchar as shorthand
 
@@ -70,7 +72,7 @@ void DataInStream(char infname[], chanend c_out)
 // Currently the function just inverts the image
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-int countNeighbours(int x, int y, uchar matrix[IMHT][IMWD/8])
+int countNeighbours(int x, int y, uchar matrix[IMHT][BYTEWIDTH])
 {
     int count = 0;
     uchar mask;
@@ -94,12 +96,12 @@ int countNeighbours(int x, int y, uchar matrix[IMHT][IMWD/8])
 
 
 
-void gameOfLife(uchar matrix[IMHT][IMWD/8])
+void gameOfLife(uchar matrix[IMHT][BYTEWIDTH])
 {
     uchar mask;
-    uchar oldMatrix[IMHT][IMWD/8];
+    uchar oldMatrix[IMHT][BYTEWIDTH];
     for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-          for( int x = 0; x < IMWD/8; x++ )   oldMatrix[y][x] = matrix[y][x];
+          for( int x = 0; x < BYTEWIDTH; x++ )   oldMatrix[y][x] = matrix[y][x];
     }
 
     for( int y = 0; y < IMHT; y++ ) {   //go through all lines
@@ -117,10 +119,10 @@ void gameOfLife(uchar matrix[IMHT][IMWD/8])
 }
 
 
-void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][IMWD/8]) {
+void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
 
     for (int y = 0; y < IMHT; y++) {
-            for (int x = 0; x < IMWD/8; x++) {
+            for (int x = 0; x < BYTEWIDTH; x++) {
                 bits[y][x] = 0;
             }
         }
@@ -135,9 +137,24 @@ void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][IMWD/8]) {
 
 }
 
+void worker(chanend toDistributer)
+{
+    uchar list[IMHT][BYTEWIDTH];
+    for( int y = 0; y < IMHT; y++ ) {
+        for( int x = 0; x < BYTEWIDTH; x++ ) {
+            toDistributer :> list[y][x];
+        }
+    }
+    gameOfLife(list);
+    for( int y = 0; y < IMHT; y++ ) {
+        for( int x = 0; x < BYTEWIDTH; x++ ) {
+            toDistributer <: list[y][x];
+        }
+    }
 
+}
 
-void distributor(chanend c_in, chanend c_out, chanend fromAcc) {
+void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend toWorkers[WORKERS]) {
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
   printf( "Waiting for asdasd Board Tilt...\n" );
@@ -145,7 +162,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc) {
 
   printf( "Processing...\n" );
   uchar matrix[IMHT][IMWD];
-  uchar list[IMHT][IMWD/8];
+  uchar list[IMHT][BYTEWIDTH];
 
 
   for( int y = 0; y < IMHT; y++ ) {
@@ -157,8 +174,18 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc) {
 
   bytesToBits(matrix, list);
 
+  for( int y = 0; y < IMHT; y++ ) {
+      for( int x = 0; x < BYTEWIDTH; x++ ) {
+          toWorkers[0] <: list[y][x];
+      }
+  }
 
-  gameOfLife(list);
+  for( int y = 0; y < IMHT; y++ ) {
+      for( int x = 0; x < BYTEWIDTH; x++ ) {
+          toWorkers[0] :> list[y][x];
+      }
+  }
+
   uchar mask;
   for( int y = 0; y < IMHT; y++ ) {
       for( int x = 0; x < IMWD; x++ ) {
@@ -261,13 +288,16 @@ i2c_master_if i2c[1];               //interface to orientation
 char infname[] = "test.pgm";     //put your input image path here
 char outfname[] = "testout.pgm"; //put your output image path here
 chan c_inIO, c_outIO, c_control;    //extend your channel definitions here
+chan workers[WORKERS];
 
 par {
     i2c_master(i2c, 1, p_scl, p_sda, 10);   //server thread providing orientation data
     orientation(i2c[0],c_control);        //client thread reading orientation data
     DataInStream(infname, c_inIO);          //thread to read in a PGM image
     DataOutStream(outfname, c_outIO);       //thread to write out a PGM image
-    distributor(c_inIO, c_outIO, c_control);//thread to coordinate work on image
+    distributor(c_inIO, c_outIO, c_control, workers);//thread to coordinate work on image
+    worker(workers[0]);
+    //worker(workers[1]);
   }
 
   return 0;

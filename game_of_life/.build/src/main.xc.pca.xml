@@ -23,7 +23,7 @@
 <fDef name="delay_microseconds" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="delay_milliseconds" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="delay_seconds" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
-<fDef name="distributor" global="true" noreturn="false" doNotSpecialize="false" numParams="3"/>
+<fDef name="distributor" global="true" noreturn="false" doNotSpecialize="false" numParams="4"/>
 <fDef name="erfcl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="erfl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="exp2l" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
@@ -97,6 +97,7 @@
 <fDef name="tanl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="tgammal" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="truncl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
+<fDef name="worker" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="write" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="4"/>
 <fDef name="write" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="false" numParams="5"/>
 <fDef name="write_reg" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="true" numParams="4"/>
@@ -1183,6 +1184,13 @@
     </values>
   </arg>
 </fCall>
+<fCall name="gameOfLife" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
 <fCall name="printf" global="true" numArgs="3">
   <arg num="0">
     <values>
@@ -1221,13 +1229,6 @@
     </values>
   </arg>
   <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="gameOfLife" global="true" numArgs="1">
-  <arg num="0">
     <values>
       <value type="unknown"/>
     </values>
@@ -1471,7 +1472,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="distributor" global="true" numArgs="3" impId="4">
+<fCall name="distributor" global="true" numArgs="4" impId="4">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1483,6 +1484,18 @@
     </values>
   </arg>
   <arg num="2">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="3">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="1" impId="5">
+  <arg num="0">
     <values>
       <value type="unknown"/>
     </values>
