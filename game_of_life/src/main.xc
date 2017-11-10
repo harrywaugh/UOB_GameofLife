@@ -10,10 +10,10 @@
 
 //BRANCH 3
 
-#define  IMHT 16                  //image height
-#define  IMWD 16
-#define  BYTEWIDTH 2              //image width
-#define  WORKERS 1
+#define  IMHT 64                  //image height
+#define  IMWD 64
+#define  BYTEWIDTH 8              //image width
+#define  WORKERS 3
 
 typedef unsigned char uchar;      //using uchar as shorthand
 
@@ -72,19 +72,18 @@ void DataInStream(char infname[], chanend c_out)
 // Currently the function just inverts the image
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-int countNeighbours(int x, int y, uchar matrix[3][2])
+int countNeighbours(int x, int y, uchar matrix[3][3])
 {
-    /////////////////////UPDATE LATER FOR 3*3
     int IMHT2 = 3;
-    int IMWD2 = 2;
+    int IMWD2 = 24;
     int count = 0;
     uchar mask;
     for (int i = IMHT2 - 1; i < IMHT2 + 2; i++)
     {
-        for (int j = IMWD -1; j < IMWD + 2; j++)
+        for (int j = IMWD2 -1; j < IMWD2 + 2; j++)
         {
             mask = (uchar)pow(2, (x+j)%8);
-            if((matrix[(y + i)%IMHT2][((x+j)%IMWD)/8] & mask) == mask)
+            if((matrix[(y + i)%IMHT2][((x+j)%IMWD2)/8] & mask) == mask)
             {
                 count++;
             }
@@ -99,58 +98,57 @@ int countNeighbours(int x, int y, uchar matrix[3][2])
 
 
 
-void gameOfLife(uchar matrix[IMHT][BYTEWIDTH])
-{
-    uchar mask;
-    uchar oldMatrix[IMHT][BYTEWIDTH];
-    for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-          for( int x = 0; x < BYTEWIDTH; x++ )   oldMatrix[y][x] = matrix[y][x];
-    }
+//void gameOfLife(uchar matrix[IMHT][BYTEWIDTH])
+//{
+//    uchar mask;
+//    uchar oldMatrix[IMHT][BYTEWIDTH];
+//    for( int y = 0; y < IMHT; y++ ) {   //go through all lines
+//          for( int x = 0; x < BYTEWIDTH; x++ )   oldMatrix[y][x] = matrix[y][x];
+//    }
+//
+//    for(int y = 0; y < IMHT; y++ ) {   //go through all lines
+//              for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
+//                  int neighbourCount;
+//                  neighbourCount = countNeighbours(x, y, oldMatrix);
+//                  mask = (uchar) pow(2, x%8);
+//                  if((oldMatrix[y][x/8] & mask) == mask){ // if alive
+//                      if(neighbourCount != 2 && neighbourCount != 3) matrix[y][x/8] = matrix[y][x/8] ^ mask;
+//                  }else{ // if dead
+//                      if(neighbourCount == 3) matrix[y][x/8] = matrix[y][x/8] | mask;
+//                  }
+//              }
+//        }
+//}
 
-    for( int y = 0; y < IMHT; y++ ) {   //go through all lines
-              for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
-                  int neighbourCount;
-                  neighbourCount = countNeighbours(x, y, oldMatrix);
-                  mask = (uchar) pow(2, x%8);
-                  if((oldMatrix[y][x/8] & mask) == mask){ // if alive
-                      if(neighbourCount != 2 && neighbourCount != 3) matrix[y][x/8] = matrix[y][x/8] ^ mask;
-                  }else{ // if dead
-                      if(neighbourCount == 3) matrix[y][x/8] = matrix[y][x/8] | mask;
-                  }
-              }
-        }
-}
-
-void printMatrix(uchar matrix[3][2])
+void printMatrix(uchar matrix[IMHT][BYTEWIDTH])
 {
-    for(int i = 0; i < 3; i++)
+    for(int i = 0; i < IMHT; i++)
     {
-        for(int j = 0; j < 2; j++)    printf("%d ", matrix[i][j]);
+        for(int j = 0; j < BYTEWIDTH; j++)    printf("%d ", matrix[i][j]);
         printf("\n");
     }
     printf("\n");
 }
 
-void gameOfLifeV2(uchar matrix[3][2])
+void gameOfLifeV2(uchar matrix[3][3])
 {
     uchar mask;
-    uchar oldMatrix[3][2];
-    printMatrix(matrix);
+    uchar oldMatrix[3][3];
     for( int y = 0; y < 3; y++ ) {   //go through all lines
-        for( int x = 0; x < 2; x++ )   oldMatrix[y][x] = matrix[y][x];
+        for( int x = 0; x < 3; x++ )   oldMatrix[y][x] = matrix[y][x];
     }
 
     //go through middle line
     int y = 1;
-    for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
+    for( int x = 8; x < 16; x++ ) { //go through each pixel(8->16) in middle byte
           int neighbourCount;
           neighbourCount = countNeighbours(x, y, oldMatrix);
           //MASK SPECIFIES CORRECT BIT, IE 2^3 SPECIFIES 3rd bit 0000 0100
-          mask = (uchar) pow(2, x%8);
-          if((oldMatrix[y][x/8] & mask) == mask){ // if alive
-              if(neighbourCount != 2 && neighbourCount != 3)    matrix[y][x/8] = matrix[y][x/8] ^ mask;
+          mask = (uchar) pow(2, x-8);
+          if((oldMatrix[y][1] & mask) == mask){ // if alive
+              if(neighbourCount != 2 && neighbourCount != 3)    matrix[y][1] = matrix[y][1] ^ mask;
           }else{ // if dead
-              if(neighbourCount == 3)    matrix[y][x/8] = matrix[y][x/8] | mask;
+              if(neighbourCount == 3)    matrix[y][1] = matrix[y][1] | mask;
           }
     }
 }
@@ -177,21 +175,19 @@ void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
 
 }
 
- void worker(chanend toDistributer)
+ void worker(chanend toDistributer, int i)
 {
-    printf("WORKER STARTED\n");
+    printf("WORKER %d STARTED\n", i);
     while (2==2) {
-        uchar list[3][2];
-        for( int y = 0; y < 3; y++ ) {
-            for( int x = 0; x < 2; x++ ) {
+        uchar list[3][3];
+        for( int x = 0; x < 3; x++ ) {
+            for( int y = 0; y < 3; y++ ) {
                 toDistributer :> list[y][x];
             }
         }
 
         gameOfLifeV2(list);
-        for( int x = 0; x < 2; x++ ) {
-            toDistributer <: list[1][x];
-        }
+        toDistributer <: list[1][1];
    }
 
 }
@@ -210,24 +206,52 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend toWorkers
   /////////////////INPUT
   for( int y = 0; y < IMHT; y++ ) {
     for( int x = 0; x < IMWD; x++ ) {
+      list2[y][x%BYTEWIDTH] = 0;
       c_in :> matrix[y][x];
     }
   }
 
   bytesToBits(matrix, list);
-  /////////////////SEND TO WORKER
-  for(int i = 0; i < IMHT; i++)
+
+  int count = 0;
+  int counts[WORKERS];
+  int x, y;
+  for(int workerN = 0; workerN < WORKERS; workerN++)
   {
-      toWorkers[0] <: list[(IMHT + i - 1) % IMHT][0];
-      toWorkers[0] <: list[(IMHT + i - 1) % IMHT][1];
-      toWorkers[0] <: list[i][0];
-      toWorkers[0] <: list[i][1];
-      toWorkers[0] <: list[(i + 1) % IMHT][0];
-      toWorkers[0] <: list[(i + 1) % IMHT][1];
+      x = count % BYTEWIDTH;
+      y = count / BYTEWIDTH;
 
+      for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
+      {
+            toWorkers[workerN] <: list[(y + IMHT - 1) % IMHT][(x+k) % BYTEWIDTH];
+            toWorkers[workerN] <: list[y][x];
+            toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
+      }
+      counts[workerN] = count++;
+  }
+  printMatrix(list2);
 
-      toWorkers[0] :> list2[i][0];
-      toWorkers[0] :> list2[i][1];
+  while (count < IMHT * BYTEWIDTH)
+  {
+      x = count % BYTEWIDTH;
+      y = count / BYTEWIDTH;
+
+      for (int workerN = 0; workerN < WORKERS; workerN++)
+      {
+          select {
+                    case toWorkers[workerN] :> list2[counts[workerN]/BYTEWIDTH][counts[workerN]%BYTEWIDTH]:
+                          for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
+                          {
+                              toWorkers[workerN] <: list[(IMHT + y - 1) % IMHT][(x+k) % BYTEWIDTH];
+                              toWorkers[workerN] <: list[y % IMHT][x];
+                              toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
+                          }
+                          counts[workerN] = count++;
+                          break;
+          }
+          x = count % BYTEWIDTH;
+          y = count / BYTEWIDTH;
+      }
   }
 
   /////////////////OUTPUT
@@ -330,7 +354,7 @@ int main(void) {
 
 i2c_master_if i2c[1];               //interface to orientation
 
-char infname[] = "test.pgm";     //put your input image path here
+char infname[] = "64x64.pgm";     //put your input image path here
 char outfname[] = "testout.pgm"; //put your output image path here
 chan c_inIO, c_outIO, c_control;    //extend your channel definitions here
 chan workers[WORKERS];
@@ -341,8 +365,9 @@ par {
     DataInStream(infname, c_inIO);          //thread to read in a PGM image
     DataOutStream(outfname, c_outIO);       //thread to write out a PGM image
     distributor(c_inIO, c_outIO, c_control, workers);//thread to coordinate work on image
-    worker(workers[0]);
-    //worker(workers[1]);
+    worker(workers[0], 0);
+    worker(workers[1], 1);
+    worker(workers[2], 2);
   }
 
   return 0;
