@@ -81,7 +81,7 @@ int countNeighbours(int x, int y, uchar matrix[3][2])
     uchar mask;
     for (int i = IMHT2 - 1; i < IMHT2 + 2; i++)
     {
-        for (int j = IMWD2 -1; j < IMWD2 + 2; j++)
+        for (int j = IMWD -1; j < IMWD + 2; j++)
         {
             mask = (uchar)pow(2, (x+j)%8);
             if((matrix[(y + i)%IMHT2][((x+j)%IMWD)/8] & mask) == mask)
@@ -121,24 +121,36 @@ void gameOfLife(uchar matrix[IMHT][BYTEWIDTH])
         }
 }
 
+void printMatrix(uchar matrix[3][2])
+{
+    for(int i = 0; i < 3; i++)
+    {
+        for(int j = 0; j < 2; j++)    printf("%d ", matrix[i][j]);
+        printf("\n");
+    }
+    printf("\n");
+}
+
 void gameOfLifeV2(uchar matrix[3][2])
 {
     uchar mask;
     uchar oldMatrix[3][2];
+    printMatrix(matrix);
     for( int y = 0; y < 3; y++ ) {   //go through all lines
         for( int x = 0; x < 2; x++ )   oldMatrix[y][x] = matrix[y][x];
     }
 
-    //go through all lines
+    //go through middle line
     int y = 1;
     for( int x = 0; x < IMWD; x++ ) { //go through each pixel per line
           int neighbourCount;
           neighbourCount = countNeighbours(x, y, oldMatrix);
+          //MASK SPECIFIES CORRECT BIT, IE 2^3 SPECIFIES 3rd bit 0000 0100
           mask = (uchar) pow(2, x%8);
           if((oldMatrix[y][x/8] & mask) == mask){ // if alive
-              if(neighbourCount != 2 && neighbourCount != 3) matrix[y][x/8] = matrix[y][x/8] ^ mask;
+              if(neighbourCount != 2 && neighbourCount != 3)    matrix[y][x/8] = matrix[y][x/8] ^ mask;
           }else{ // if dead
-              if(neighbourCount == 3) matrix[y][x/8] = matrix[y][x/8] | mask;
+              if(neighbourCount == 3)    matrix[y][x/8] = matrix[y][x/8] | mask;
           }
     }
 }
@@ -165,7 +177,7 @@ void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
 
 }
 
-void worker(chanend toDistributer)
+ void worker(chanend toDistributer)
 {
     printf("WORKER STARTED\n");
     while (2==2) {
@@ -217,11 +229,6 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend toWorkers
       toWorkers[0] :> list2[i][0];
       toWorkers[0] :> list2[i][1];
   }
-
-
-
-
-
 
   /////////////////OUTPUT
   uchar mask;
