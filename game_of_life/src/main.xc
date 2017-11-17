@@ -49,11 +49,29 @@ port LEDs = XS1_PORT_4F;
 //READ BUTTONS and send button pattern to userAnt
 void buttonListener(in port b, chanend toDistributer) {
   int r;
+  int started = 0;
+  int exportNextIteration = 0;
   while (1) {
     b when pinseq(15)  :> r;    // check that no button is pressed
     b when pinsneq(15) :> r;    // check if some buttons are pressed
-    if ((r==13) || (r==14))     // if either button is pressed
-    toDistributer <: r;             // send button pattern to distributer
+
+    if (r==14 && started == 0)                     // if sw1 is pressed, then r = 14               (sw2 is r = 13)
+    {
+        toDistributer <: r;             // send button pattern to distributer
+        started = 1;
+    }
+    if(r == 13)    exportNextIteration = 1;
+    int iterationFinished = 0;
+    select
+          {
+              case toDistributer :> iterationFinished:
+                  if(iterationFinished == 1 && exportNextIteration == 1 && started == 1)
+                  {
+                      toDistributer <: r;
+                      exportNextIteration == 0;
+                  }
+                  break;
+          }
   }
 }
 
@@ -240,57 +258,68 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
   bytesToBits(matrix, list);
 
-  int count = 0;
-  int counts[WORKERS];
-  int x, y;
-  for(int workerN = 0; workerN < WORKERS; workerN++)
+
+
+  while(2 == 2)
   {
-      x = count % BYTEWIDTH;
-      y = count / BYTEWIDTH;
+      int count = 0;
+        int counts[WORKERS];
+        int x, y;
+        for(int workerN = 0; workerN < WORKERS; workerN++)
+        {
+            x = count % BYTEWIDTH;
+            y = count / BYTEWIDTH;
 
-      for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
-      {
-            toWorkers[workerN] <: list[(y + IMHT - 1) % IMHT][(x+k) % BYTEWIDTH];
-            toWorkers[workerN] <: list[y][(x+k) % BYTEWIDTH];
-            toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
-      }
-      counts[workerN] = count++;
+            for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
+            {
+                  toWorkers[workerN] <: list[(y + IMHT - 1) % IMHT][(x+k) % BYTEWIDTH];
+                  toWorkers[workerN] <: list[y][(x+k) % BYTEWIDTH];
+                  toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
+            }
+            counts[workerN] = count++;
+        }
+
+      while (count < IMHT * BYTEWIDTH)
+       {
+           x = count % BYTEWIDTH;
+           y = count / BYTEWIDTH;
+
+           for (int workerN = 0; workerN < WORKERS; workerN++)
+           {
+               select {
+                         case toWorkers[workerN] :> list2[counts[workerN]/BYTEWIDTH][counts[workerN]%BYTEWIDTH]:
+                               for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
+                               {
+                                   toWorkers[workerN] <: list[(IMHT + y - 1) % IMHT][(x+k) % BYTEWIDTH];
+                                   toWorkers[workerN] <: list[y % IMHT][(x+k) % BYTEWIDTH];
+                                   toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
+                               }
+                               counts[workerN] = count++;
+                               break;
+               }
+               x = count % BYTEWIDTH;
+               y = count / BYTEWIDTH;
+           }
+       }
+       fromButton <: 1;
+       int exportMatrix = 0;
+       fromButton :> exportMatrix;
+       if(exportMatrix == 1)
+       {
+           /////////////////OUTPUT
+             uchar mask;
+             for( int y = 0; y < IMHT; y++ ) {
+                 for( int x = 0; x < IMWD; x++ ) {
+                     mask = (uchar)pow(2, x%8);
+                     if((list2[y][x/8] & mask) == mask) c_out <: (uchar)0xff;
+                     else c_out <: (uchar)0x00;
+                 }
+             }
+             printf( "\nOne processing round completed...\n" );
+       }
   }
-  //printMatrix(list2);
 
-  while (count < IMHT * BYTEWIDTH)
-  {
-      x = count % BYTEWIDTH;
-      y = count / BYTEWIDTH;
 
-      for (int workerN = 0; workerN < WORKERS; workerN++)
-      {
-          select {
-                    case toWorkers[workerN] :> list2[counts[workerN]/BYTEWIDTH][counts[workerN]%BYTEWIDTH]:
-                          for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
-                          {
-                              toWorkers[workerN] <: list[(IMHT + y - 1) % IMHT][(x+k) % BYTEWIDTH];
-                              toWorkers[workerN] <: list[y % IMHT][(x+k) % BYTEWIDTH];
-                              toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
-                          }
-                          counts[workerN] = count++;
-                          break;
-          }
-          x = count % BYTEWIDTH;
-          y = count / BYTEWIDTH;
-      }
-  }
-
-  /////////////////OUTPUT
-  uchar mask;
-  for( int y = 0; y < IMHT; y++ ) {
-      for( int x = 0; x < IMWD; x++ ) {
-          mask = (uchar)pow(2, x%8);
-          if((list2[y][x/8] & mask) == mask) c_out <: (uchar)0xff;
-          else c_out <: (uchar)0x00;
-      }
-  }
-  printf( "\nOne processing round completed...\n" );
 }
 
 
@@ -381,7 +410,7 @@ int main(void) {
 
 i2c_master_if i2c[1];               //interface to orientation
 
-char infname[] = "custom64.pgm";     //put your input image path here
+char infname[] = "64x64.pgm";     //put your input image path here
 char outfname[] = "testout.pgm"; //put your output image path here
 chan c_inIO, c_outIO, c_control, buttonToDist;    //extend your channel definitions here
 chan workers[WORKERS];

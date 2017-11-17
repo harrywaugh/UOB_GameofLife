@@ -24,7 +24,7 @@
 <fDef name="delay_microseconds" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="delay_milliseconds" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="delay_seconds" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
-<fDef name="distributor" global="true" noreturn="false" doNotSpecialize="false" numParams="5"/>
+<fDef name="distributor" global="true" noreturn="true" doNotSpecialize="false" numParams="5"/>
 <fDef name="erfcl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="erfl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="exp2l" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
