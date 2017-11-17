@@ -54,9 +54,9 @@ void DataInStream(char infname[], chanend c_out)
     _readinline( line, IMWD );
     for( int x = 0; x < IMWD; x++ ) {
       c_out <: line[ x ];
-      printf( "-%4.1d ", line[ x ] ); //show image values
+      //printf( "-%4.1d ", line[ x ] ); //show image values
     }
-    printf( "\n" );
+    //printf( "\n" );
   }
 
   //Close PGM image file
@@ -74,16 +74,16 @@ void DataInStream(char infname[], chanend c_out)
 /////////////////////////////////////////////////////////////////////////////////////////
 int countNeighbours(int x, int y, uchar matrix[3][3])
 {
-    int IMHT2 = 3;
-    int IMWD2 = 24;
+    int BYTEHEIGHT = 3;
+    int BITWIDTH = 24;
     int count = 0;
     uchar mask;
-    for (int i = IMHT2 - 1; i < IMHT2 + 2; i++)
+    for (int i = BYTEHEIGHT - 1; i < BYTEHEIGHT + 2; i++)
     {
-        for (int j = IMWD2 -1; j < IMWD2 + 2; j++)
+        for (int j = BITWIDTH - 1; j < BITWIDTH + 2; j++)
         {
             mask = (uchar)pow(2, (x+j)%8);
-            if((matrix[(y + i)%IMHT2][((x+j)%IMWD2)/8] & mask) == mask)
+            if((matrix[(y + i) % BYTEHEIGHT][((x+j)%BITWIDTH)/8] & mask) == mask)
             {
                 count++;
             }
@@ -224,12 +224,12 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend toWorkers
       for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
       {
             toWorkers[workerN] <: list[(y + IMHT - 1) % IMHT][(x+k) % BYTEWIDTH];
-            toWorkers[workerN] <: list[y][x];
+            toWorkers[workerN] <: list[y][(x+k) % BYTEWIDTH];
             toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
       }
       counts[workerN] = count++;
   }
-  printMatrix(list2);
+  //printMatrix(list2);
 
   while (count < IMHT * BYTEWIDTH)
   {
@@ -243,7 +243,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend toWorkers
                           for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
                           {
                               toWorkers[workerN] <: list[(IMHT + y - 1) % IMHT][(x+k) % BYTEWIDTH];
-                              toWorkers[workerN] <: list[y % IMHT][x];
+                              toWorkers[workerN] <: list[y % IMHT][(x+k) % BYTEWIDTH];
                               toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
                           }
                           counts[workerN] = count++;
@@ -354,7 +354,7 @@ int main(void) {
 
 i2c_master_if i2c[1];               //interface to orientation
 
-char infname[] = "64x64.pgm";     //put your input image path here
+char infname[] = "custom64.pgm";     //put your input image path here
 char outfname[] = "testout.pgm"; //put your output image path here
 chan c_inIO, c_outIO, c_control;    //extend your channel definitions here
 chan workers[WORKERS];
