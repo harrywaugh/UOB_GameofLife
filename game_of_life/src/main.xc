@@ -10,10 +10,10 @@
 
 //BRANCH 3
 
-#define  IMHT 64                  //image height
-#define  IMWD 64
-#define  BYTEWIDTH 8              //image width
-#define  WORKERS 3
+#define  IMHT 64                  //image height in bits
+#define  IMWD 64                  //image width in bits
+#define  BYTEWIDTH 8              //image width in bytes
+#define  WORKERS 3                //image width in bytes
 
 typedef unsigned char uchar;      //using uchar as shorthand
 
@@ -46,6 +46,7 @@ port LEDs = XS1_PORT_4F;
 //  return 0;
 //}
 
+
 //READ BUTTONS and send button pattern to userAnt
 void buttonListener(in port b, chanend toDistributer) {
   int r;
@@ -62,6 +63,7 @@ void buttonListener(in port b, chanend toDistributer) {
     }
     if(r == 13)    exportNextIteration = 1;
     int iterationFinished = 0;
+    //Be notified when an iteration of game of life has finished. Notify DISTRIBUTER if the export button is pressed.
     select
           {
               case toDistributer :> iterationFinished:
@@ -111,9 +113,8 @@ void DataInStream(char infname[], chanend c_out)
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
-// Start your implementation by changing this function to implement the game of life
-// by farming out parts of the image to worker threads who implement it...
-// Currently the function just inverts the image
+// Takes a 3 by 3 array of bytes, and x and y coordinate of the desired bit.
+// Returns the amount of 1's that surround the desired bit.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 int countNeighbours(int x, int y, uchar matrix[3][3])
@@ -122,17 +123,22 @@ int countNeighbours(int x, int y, uchar matrix[3][3])
     int BITWIDTH = 24;
     int count = 0;
     uchar mask;
+    //Creates a for loop, from 2 -> 4, in order to select the desired row.
     for (int i = BYTEHEIGHT - 1; i < BYTEHEIGHT + 2; i++)
     {
+        //Creates a for loop, from 23 -> 25, in order to select the desired column.
         for (int j = BITWIDTH - 1; j < BITWIDTH + 2; j++)
         {
+            //Creates a bit mask, (E.G 2^3, is 0000 0100), of the relevant bit position.
             mask = (uchar)pow(2, (x+j)%8);
-            if((matrix[(y + i) % BYTEHEIGHT][((x+j)%BITWIDTH)/8] & mask) == mask)
+            //Match byte that desired bit is in, against the mask, this checks if nth bit is a 1 or not.
+            if((matrix[(y + i) % BYTEHEIGHT][((x+j) % BITWIDTH)/8] & mask) == mask)
             {
                 count++;
             }
         }
     }
+    //If desired bit is a 1, it removes this. Previous for loop checks all neighbours and itself.
     mask = (uchar)pow(2, x%8);
     if((matrix[y][x/8]& mask) == mask ){
         count--;
@@ -164,6 +170,12 @@ int countNeighbours(int x, int y, uchar matrix[3][3])
 //        }
 //}
 
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Print matrix bytes of height of image in bits, and width of image in bytes.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 void printMatrix(uchar matrix[IMHT][BYTEWIDTH])
 {
     for(int i = 0; i < IMHT; i++)
@@ -174,18 +186,27 @@ void printMatrix(uchar matrix[IMHT][BYTEWIDTH])
     printf("\n");
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+//GameOfLife, takes a 3 by 3 matrix of bytes.
+//Performs one iteration of Game of life on the middle byte of the matrix.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 void gameOfLifeV2(uchar matrix[3][3])
 {
+    //Copies previous matrix
     uchar mask;
     uchar oldMatrix[3][3];
-    for( int y = 0; y < 3; y++ ) {   //go through all lines
+    for( int y = 0; y < 3; y++ ) {
         for( int x = 0; x < 3; x++ )   oldMatrix[y][x] = matrix[y][x];
     }
 
-    //go through middle line
+    //Y is always equal to one as we are dealing with the middle byte.
     int y = 1;
     for( int x = 8; x < 16; x++ ) { //go through each pixel(8->16) in middle byte
           int neighbourCount;
+          //Count neighhbours around the current bit.
           neighbourCount = countNeighbours(x, y, oldMatrix);
           //MASK SPECIFIES CORRECT BIT, IE 2^3 SPECIFIES 3rd bit 0000 0100
           mask = (uchar) pow(2, x-8);
@@ -200,18 +221,26 @@ void gameOfLifeV2(uchar matrix[3][3])
 
 
 
-
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Converts the given matrix of uchars, where each uchar is either 255 or 0
+// to a matrix of uchars, where each byte stores 8 of the previous matrixes uchars.
+// Now each pxixel in the image is represented by a single bit.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
 void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
-
+    //Initialise new array.
     for (int y = 0; y < IMHT; y++) {
             for (int x = 0; x < BYTEWIDTH; x++) {
                 bits[y][x] = 0;
             }
         }
-
+    //Go through each uchar in the old matrix
     for (int y = 0; y < IMHT; y++) {
         for (int x = 0; x < IMWD; x++) {
+            //If uchar represents an alive pixel
             if (bytes[y][x] == 255) {
+                //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
                 bits[y][x/8] = bits[y][x/8] | (uchar) pow(2, (x % 8));
             }
         }
@@ -219,6 +248,14 @@ void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
 
 }
 
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Worker runs on a seperate channel, listens for 3 by 3 byte matrixes.
+// Performs the game of life function on them.
+// Sends the changed byte(1, 1) back to distributer.
+//
+/////////////////////////////////////////////////////////////////////////////////////////
  void worker(chanend toDistributer, int i)
 {
     printf("WORKER %d STARTED\n", i);
@@ -236,6 +273,13 @@ void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
 
 }
 
+
+ /////////////////////////////////////////////////////////////////////////////////////////
+ //
+ // Takes in orginal matrix of pixels. Handles which workers get bytes.
+ // Recompiles them into next iteration of matrix. Handles exporting of matrix.
+ //
+ /////////////////////////////////////////////////////////////////////////////////////////
 void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButton, chanend toWorkers[WORKERS]) {
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
@@ -256,10 +300,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
     }
   }
 
+  //Convert matrix to new matrix where bits represent pixels, instead of bytes.
   bytesToBits(matrix, list);
 
 
-
+  //Loop indefinitely, next loop uncommented, as will change over next week.
   while(2 == 2)
   {
       int count = 0;
