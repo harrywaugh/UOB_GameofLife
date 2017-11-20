@@ -50,30 +50,40 @@ port LEDs = XS1_PORT_4F;
 //READ BUTTONS and send button pattern to userAnt
 void buttonListener(in port b, chanend toDistributer) {
   int r;
-  int started = 0;
   int exportNextIteration = 0;
+  int start  = 0;
   while (1) {
     b when pinseq(15)  :> r;    // check that no button is pressed
     b when pinsneq(15) :> r;    // check if some buttons are pressed
 
-    if (r==14 && started == 0)                     // if sw1 is pressed, then r = 14               (sw2 is r = 13)
+    if(r == 13 && start == 1)
     {
-        toDistributer <: r;             // send button pattern to distributer
-        started = 1;
+        printf("r = 13\n");
+        toDistributer <: r;
+        r = 0;
     }
-    if(r == 13)    exportNextIteration = 1;
-    int iterationFinished = 0;
-    //Be notified when an iteration of game of life has finished. Notify DISTRIBUTER if the export button is pressed.
-    select
-          {
-              case toDistributer :> iterationFinished:
-                  if(iterationFinished == 1 && exportNextIteration == 1 && started == 1)
-                  {
-                      toDistributer <: r;
-                      exportNextIteration == 0;
-                  }
-                  break;
-          }
+    else if (r==14 && start == 0)                     // if sw1 is pressed, then r = 14               (sw2 is r = 13)
+    {
+        toDistributer <: r;
+        r = 0;             // send button pattern to distributer
+        start = 1;
+    }
+//    if(r == 13)    exportNextIteration = 1;
+//    int iterationFinished = 0;
+//    //Be notified when an iteration of game of life has finished. Notify DISTRIBUTER if the export button is pressed.
+//    select
+//          {
+//              case toDistributer :> iterationFinished:
+//                  printf("Recieved 1\n");
+//                  printf("%d\n", r);
+//                  if(exportNextIteration == 1)
+//                  {
+//                      printf("Exporting Iteration Button Pressed\n");
+//                      toDistributer <: r;
+//                      exportNextIteration == 0;
+//                  }
+//                  break;
+//          }
   }
 }
 
@@ -284,6 +294,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf( "ProcessImage: Start, size = %dx%d\n", IMHT, IMWD );
   printf( "Waiting for SW1 Button Press...\n" );
+
+
   fromButton :> int value;
   //fromAcc :> int value;
 
@@ -307,7 +319,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   //Loop indefinitely, next loop uncommented, as will change over next week.
   while(2 == 2)
   {
-      int count = 0;
+        int count = 0;
+        int exportCurrent = 0;
+        int exportMatrix = 0;
         int counts[WORKERS];
         int x, y;
         for(int workerN = 0; workerN < WORKERS; workerN++)
@@ -317,21 +331,26 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
             for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
             {
+
                   toWorkers[workerN] <: list[(y + IMHT - 1) % IMHT][(x+k) % BYTEWIDTH];
                   toWorkers[workerN] <: list[y][(x+k) % BYTEWIDTH];
                   toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
             }
             counts[workerN] = count++;
         }
-
       while (count < IMHT * BYTEWIDTH)
        {
            x = count % BYTEWIDTH;
            y = count / BYTEWIDTH;
 
-           for (int workerN = 0; workerN < WORKERS; workerN++)
+           for (int workerN = 0; workerN < WORKERS && count < IMHT*BYTEWIDTH; workerN++)
            {
                select {
+                         case fromButton :> exportMatrix:
+                                  printf("Received from button\n");
+                                  exportCurrent = 1;
+                                  workerN--;
+                                  break;
                          case toWorkers[workerN] :> list2[counts[workerN]/BYTEWIDTH][counts[workerN]%BYTEWIDTH]:
                                for(int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++)
                                {
@@ -339,31 +358,48 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
                                    toWorkers[workerN] <: list[y % IMHT][(x+k) % BYTEWIDTH];
                                    toWorkers[workerN] <: list[(y + 1) % IMHT][(x+k) % BYTEWIDTH];
                                }
-                               counts[workerN] = count++;
+                               counts[workerN] = count;
+                               count++;
                                break;
+
                }
                x = count % BYTEWIDTH;
                y = count / BYTEWIDTH;
            }
        }
-       fromButton <: 1;
-       int exportMatrix = 0;
-       fromButton :> exportMatrix;
-       if(exportMatrix == 1)
-       {
-           /////////////////OUTPUT
-             uchar mask;
-             for( int y = 0; y < IMHT; y++ ) {
-                 for( int x = 0; x < IMWD; x++ ) {
-                     mask = (uchar)pow(2, x%8);
-                     if((list2[y][x/8] & mask) == mask) c_out <: (uchar)0xff;
-                     else c_out <: (uchar)0x00;
-                 }
-             }
-             printf( "\nOne processing round completed...\n" );
-       }
-  }
 
+       for(int workerN = 0; workerN < WORKERS; workerN++)
+       {
+           select {
+               case toWorkers[workerN] :> list2[counts[workerN]/BYTEWIDTH][counts[workerN]%BYTEWIDTH]:
+                   break;
+           }
+       }
+       printf("Iteration Complete\n");
+       if(exportCurrent == 1)
+       {
+               /////////////////OUTPUT
+               uchar mask;
+               c_out <: 1;
+               for( int y = 0; y < IMHT; y++ ) {
+                    for( int x = 0; x < IMWD; x++ ) {
+                        mask = (uchar)pow(2, x%8);
+                        if((list2[y][x/8] & mask) == mask) c_out <: (uchar)0xff;
+                        else c_out <: (uchar)0x00;
+                    }
+                }
+       }
+       for(int i = 0; i < IMHT; i++)
+       {
+           for(int j = 0; j < BYTEWIDTH; j++)
+           {
+               list[i][j] = list2[i][j];
+           }
+       }
+       printf( "\nOne processing round completed...\n" );
+
+
+  }
 
 }
 
@@ -377,29 +413,34 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 /////////////////////////////////////////////////////////////////////////////////////////
 void DataOutStream(char outfname[], chanend c_in)
 {
-  int res;
-  uchar line[ IMWD ];
+  while(1)
+  {
+        c_in :> int value;
+        int res;
+        uchar line[ IMWD ];
 
-  //Open PGM file
-  printf( "DataOutStream: Start...\n" );
-  res = _openoutpgm( outfname, IMWD, IMHT );
-  if( res ) {
-    printf( "DataOutStream: Error opening %s\n.", outfname );
-    return;
+        //Open PGM file
+        printf( "DataOutStream: Start...\n" );
+        res = _openoutpgm( outfname , IMWD, IMHT );
+        if( res ) {
+          printf( "DataOutStream: Error opening %s\n.", outfname );
+          return;
+        }
+
+        //Compile each line of the image and write the image line-by-line
+        for( int y = 0; y < IMHT; y++ ) {
+          for( int x = 0; x < IMWD; x++ ) {
+            c_in :> line[ x ];
+          }
+          _writeoutline( line, IMWD );
+          printf( "DataOutStream: Line written...\n" );
+        }
+
+        //Close the PGM image
+        _closeoutpgm();
+        printf( "DataOutStream: Done...\n" );
   }
 
-  //Compile each line of the image and write the image line-by-line
-  for( int y = 0; y < IMHT; y++ ) {
-    for( int x = 0; x < IMWD; x++ ) {
-      c_in :> line[ x ];
-    }
-    _writeoutline( line, IMWD );
-    printf( "DataOutStream: Line written...\n" );
-  }
-
-  //Close the PGM image
-  _closeoutpgm();
-  printf( "DataOutStream: Done...\n" );
   return;
 }
 
