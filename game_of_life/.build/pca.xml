@@ -887,6 +887,25 @@
     </values>
   </arg>
 </fInfo>
+<fInfo name="initialiseBitsArray" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="1">
+  <arg num="0" specialize="false">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fInfo>
+<fInfo name="inputImage" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="2">
+  <arg num="0" specialize="false">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1" specialize="false">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fInfo>
 <fInfo name="ldexpl" global="true" specialize="false" noreturn="false" doNotSpecialize="true" numParams="2">
   <arg num="0" specialize="false">
     <values>
@@ -1061,6 +1080,18 @@
     <arg num="1"><values><value type="unknown"/></values></arg>
    </specialization>
  </specializations>
+</fInfo>
+<fInfo name="outputImage" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="2">
+  <arg num="0" specialize="false">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1" specialize="false">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
 </fInfo>
 <fInfo name="powl" global="true" specialize="false" noreturn="false" doNotSpecialize="true" numParams="2">
   <arg num="0" specialize="false">

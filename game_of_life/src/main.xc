@@ -213,6 +213,37 @@ void worker(chanend toDistributer, int i) {
   }
 }
 
+void inputImage(chanend input, uchar bytes[IMHT][IMWD]) {
+  for (int y = 0; y < IMHT; y++) {
+    for (int x = 0; x < IMWD; x++) {
+      input :> bytes[y][x];
+    }
+  }
+}
+
+void initialiseBitsArray(uchar bits[IMHT][BYTEWIDTH]) {
+  for (int y = 0; y < IMHT; y++) {
+    for (int x = 0; x < BYTEWIDTH; x++) {
+      bits[y][x] = 0;
+    }
+  }
+}
+
+void outputImage(chanend output, uchar bits[IMHT][BYTEWIDTH]) {
+  uchar mask;
+  output <: 1;
+  for (int y = 0; y < IMHT; y++) {
+    for (int x = 0; x < IMWD; x++) {
+      mask = (uchar) pow(2, x % 8);
+      if ((bits[y][x/8] & mask) == mask) {
+        output <: (uchar) 0xff;
+      } else {
+        output <: (uchar) 0x00;
+      }
+    }
+  }
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Takes in orginal matrix of pixels. Handles which workers get bytes.
@@ -227,21 +258,16 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   fromButton :> int value;
 
   printf("Processing...\n");
-  uchar matrix[IMHT][IMWD];
-  uchar list[IMHT][BYTEWIDTH];
-  uchar list2[IMHT][BYTEWIDTH];
+  uchar bytes[IMHT][IMWD];
+  uchar initialBits[IMHT][BYTEWIDTH];
+  uchar finishedBits[IMHT][BYTEWIDTH];
 
-  // THIS CAN BE A FUNCTION
-  //Iterate through each pixel and read in the input from DataInStream
-  for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < IMWD; x++) {
-      list2[y][x % BYTEWIDTH] = 0;
-      c_in :> matrix[y][x];
-    }
-  }
+  inputImage(c_in, bytes);
+
+  initialiseBitsArray(finishedBits);
 
   //Convert matrix to new matrix where pixels are represented by bits, not bytes.
-  bytesToBits(matrix, list);
+  bytesToBits(bytes, initialBits);
 
   //Loop indefinitely, next loop uncommented, as will change over next week.
   while (2 == 2) {
@@ -256,9 +282,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       y = count / BYTEWIDTH;
 
       for (int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++) {
-        toWorkers[workerN] <: list[(y + IMHT - 1) % IMHT][(x + k) % BYTEWIDTH];
-        toWorkers[workerN] <: list[y][(x + k) % BYTEWIDTH];
-        toWorkers[workerN] <: list[(y + 1) % IMHT][(x + k) % BYTEWIDTH];
+        toWorkers[workerN] <: initialBits[(y + IMHT - 1) % IMHT][(x + k) % BYTEWIDTH];
+        toWorkers[workerN] <: initialBits[y][(x + k) % BYTEWIDTH];
+        toWorkers[workerN] <: initialBits[(y + 1) % IMHT][(x + k) % BYTEWIDTH];
       }
       counts[workerN] = count++;
     }
@@ -273,11 +299,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
           exportCurrent = 1;
           workerN--;
           break;
-        case toWorkers[workerN] :> list2[counts[workerN] / BYTEWIDTH][counts[workerN] % BYTEWIDTH]:
+        case toWorkers[workerN] :> finishedBits[counts[workerN] / BYTEWIDTH][counts[workerN] % BYTEWIDTH]:
           for (int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++) {
-            toWorkers[workerN] <: list[(y + IMHT - 1) % IMHT][(x + k) % BYTEWIDTH];
-            toWorkers[workerN] <: list[y % IMHT][(x + k) % BYTEWIDTH];
-            toWorkers[workerN] <: list[(y + 1) % IMHT][(x + k) % BYTEWIDTH];
+            toWorkers[workerN] <: initialBits[(y + IMHT - 1) % IMHT][(x + k) % BYTEWIDTH];
+            toWorkers[workerN] <: initialBits[y % IMHT][(x + k) % BYTEWIDTH];
+            toWorkers[workerN] <: initialBits[(y + 1) % IMHT][(x + k) % BYTEWIDTH];
           }
           counts[workerN] = count;
           count++;
@@ -290,7 +316,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
     for (int workerN = 0; workerN < WORKERS; workerN++) {
       select {
-      case toWorkers[workerN] :> list2[counts[workerN] / BYTEWIDTH][counts[workerN] % BYTEWIDTH]:
+      case toWorkers[workerN] :> finishedBits[counts[workerN] / BYTEWIDTH][counts[workerN] % BYTEWIDTH]:
         break;
       }
     }
@@ -298,23 +324,13 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
     printf("Iteration Complete\n");
 
     if (exportCurrent == 1) {
-      // THIS CAN BE A FUNCTION
-      /////////////////OUTPUT
-      uchar mask;
-      c_out <: 1;
-      for (int y = 0; y < IMHT; y++) {
-        for (int x = 0; x < IMWD; x++) {
-          mask = (uchar) pow(2, x % 8);
-          if ((list2[y][x / 8] & mask) == mask) c_out <: (uchar) 0xff;
-          else c_out <: (uchar) 0x00;
-        }
-      }
+      outputImage(c_out, finishedBits);
     }
 
-    // THIS CAN BE A FUNCTION LIKE COPY MATRIX OR SOMETHING AND WE CAN USE THAT OTHER TIMES TOO
+    // cant seem to make this a function
     for (int i = 0; i < IMHT; i++) {
       for (int j = 0; j < BYTEWIDTH; j++) {
-        list[i][j] = list2[i][j];
+        initialBits[i][j] = finishedBits[i][j];
       }
     }
 
