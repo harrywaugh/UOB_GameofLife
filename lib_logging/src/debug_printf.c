@@ -1,5 +1,5 @@
 // Copyright (c) 2015, XMOS Ltd, All rights reserved
-#include <debug_print.h>
+//#include <debug_print.h>
 #include <print.h>
 #include <stdarg.h>
 #include <syscall.h>
