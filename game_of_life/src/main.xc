@@ -244,6 +244,14 @@ void outputImage(chanend output, uchar bits[IMHT][BYTEWIDTH]) {
   }
 }
 
+void sendBytes(chanend worker, int x, int y, uchar bits[IMHT][BYTEWIDTH]) {
+  for (int i = BYTEWIDTH - 1; i < BYTEWIDTH + 2; i++) {
+    for (int j = IMHT - 1; j < IMHT + 2; j++) {
+      worker <: bits[(y+j) % IMHT][(x+i) % BYTEWIDTH];
+    }
+  }
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Takes in orginal matrix of pixels. Handles which workers get bytes.
@@ -271,60 +279,45 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
   //Loop indefinitely, next loop uncommented, as will change over next week.
   while (2 == 2) {
+
     int count = 0;
     int exportCurrent = 0;
-    int exportMatrix = 0;
     int counts[WORKERS];
     int x, y;
 
-    for (int workerN = 0; workerN < WORKERS; workerN++) {
+    for (int w = 0; w < WORKERS; w++) {
       x = count % BYTEWIDTH;
       y = count / BYTEWIDTH;
-
-      for (int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++) {
-        toWorkers[workerN] <: initialBits[(y + IMHT - 1) % IMHT][(x + k) % BYTEWIDTH];
-        toWorkers[workerN] <: initialBits[y][(x + k) % BYTEWIDTH];
-        toWorkers[workerN] <: initialBits[(y + 1) % IMHT][(x + k) % BYTEWIDTH];
-      }
-      counts[workerN] = count++;
+      sendBytes(toWorkers[w], x, y, initialBits);
+      counts[w] = count;
+      count++;
     }
-    while (count < IMHT * BYTEWIDTH) {
-      x = count % BYTEWIDTH;
-      y = count / BYTEWIDTH;
 
-      for (int workerN = 0; workerN < WORKERS && count < IMHT * BYTEWIDTH; workerN++) {
-        select {
-        case fromButton :> exportMatrix:
-          printf("Received from button\n");
-          exportCurrent = 1;
-          workerN--;
-          break;
-        case toWorkers[workerN] :> finishedBits[counts[workerN] / BYTEWIDTH][counts[workerN] % BYTEWIDTH]:
-          for (int k = BYTEWIDTH - 1; k < BYTEWIDTH + 2; k++) {
-            toWorkers[workerN] <: initialBits[(y + IMHT - 1) % IMHT][(x + k) % BYTEWIDTH];
-            toWorkers[workerN] <: initialBits[y % IMHT][(x + k) % BYTEWIDTH];
-            toWorkers[workerN] <: initialBits[(y + 1) % IMHT][(x + k) % BYTEWIDTH];
-          }
-          counts[workerN] = count;
-          count++;
-          break;
-        }
+    while (count < IMHT * BYTEWIDTH) {
+      for (int w = 0; w < WORKERS && count < IMHT * BYTEWIDTH; w++) {
         x = count % BYTEWIDTH;
         y = count / BYTEWIDTH;
+        select {
+          case fromButton :> exportCurrent:
+            printf("Received from button\n");
+            w--;
+            break;
+          case toWorkers[w] :> finishedBits[counts[w] / BYTEWIDTH][counts[w] % BYTEWIDTH]:
+            sendBytes(toWorkers[w], x, y, initialBits);
+            counts[w] = count;
+            count++;
+            break;
+        }
       }
     }
 
-    for (int workerN = 0; workerN < WORKERS; workerN++) {
-      select {
-      case toWorkers[workerN] :> finishedBits[counts[workerN] / BYTEWIDTH][counts[workerN] % BYTEWIDTH]:
-        break;
-      }
+    for (int w = 0; w < WORKERS; w++) {
+      toWorkers[w] :> finishedBits[counts[w] / BYTEWIDTH][counts[w] % BYTEWIDTH];
     }
 
-    printf("Iteration Complete\n");
-
-    if (exportCurrent == 1) {
+    if (exportCurrent == 13) {
       outputImage(c_out, finishedBits);
+      exportCurrent = 0;
     }
 
     // cant seem to make this a function
@@ -334,7 +327,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       }
     }
 
-    printf("\nOne processing round completed...\n");
+    printf("One processing round completed...\n");
   }
 }
 
