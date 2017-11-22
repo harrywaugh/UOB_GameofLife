@@ -136,6 +136,14 @@ void printMatrix(uchar matrix[IMHT][BYTEWIDTH]) {
   printf("\n");
 }
 
+//void duplicateMatrix(int xLen, int yLen, uchar oldMatrix[yLen][xLen], uchar newMatrix[yLen][xLen])  {
+//  for (int y = 0; y < yLen; y++)  {
+//    for (int x = 0; x < xLen; x++)  {
+//      newMatrix[y][x] = oldMatrix[y][x];
+//    }
+//  }
+//}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 //GameOfLife, takes a 3 by 3 matrix of bytes.
@@ -146,8 +154,10 @@ void gameOfLife(uchar matrix[3][3]) {
   //Copies previous matrix
   uchar mask;
   uchar oldMatrix[3][3];
-  for (int y = 0; y < 3; y++) {
-    for (int x = 0; x < 3; x++) oldMatrix[y][x] = matrix[y][x];
+  for (int y = 0; y < 3; y++)  {
+    for (int x = 0; x < 3; x++)  {
+      oldMatrix[y][x] = matrix[y][x];
+    }
   }
 
   //Y is always equal to one as we are dealing with the middle byte.
@@ -174,12 +184,7 @@ void gameOfLife(uchar matrix[3][3]) {
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
-  //Initialise new array.
-  for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < BYTEWIDTH; x++) {
-      bits[y][x] = 0;
-    }
-  }
+
   //Go through each uchar in the old matrix
   for (int y = 0; y < IMHT; y++) {
     for (int x = 0; x < IMWD; x++) {
@@ -252,6 +257,9 @@ void sendBytes(chanend worker, int x, int y, uchar bits[IMHT][BYTEWIDTH]) {
   }
 }
 
+int getXfromCount(int count)  {  return count % BYTEWIDTH;  }
+int getYfromCount(int count)  {  return count / BYTEWIDTH;  }
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Takes in orginal matrix of pixels. Handles which workers get bytes.
@@ -266,66 +274,60 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   fromButton :> int value;
 
   printf("Processing...\n");
-  uchar bytes[IMHT][IMWD];
-  uchar initialBits[IMHT][BYTEWIDTH];
-  uchar finishedBits[IMHT][BYTEWIDTH];
+  uchar bytes[IMHT][IMWD], initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
 
   inputImage(c_in, bytes);
 
+  //Initialise arrays.
+  initialiseBitsArray(initialBits);
   initialiseBitsArray(finishedBits);
 
   //Convert matrix to new matrix where pixels are represented by bits, not bytes.
   bytesToBits(bytes, initialBits);
 
-  //Loop indefinitely, next loop uncommented, as will change over next week.
+  //Loop until the universe implodes
   while (2 == 2) {
 
-    int count = 0;
-    int exportCurrent = 0;
-    int counts[WORKERS];
-    int x, y;
+    int count = 0, exportCurrent = 0, counts[WORKERS], x, y;
 
+    //Send initial N bytes to each worker.
     for (int w = 0; w < WORKERS; w++) {
-      x = count % BYTEWIDTH;
-      y = count / BYTEWIDTH;
+      x = getXfromCount(count);
+      y = getYfromCount(count);
       sendBytes(toWorkers[w], x, y, initialBits);
-      counts[w] = count;
-      count++;
+      counts[w] = count++;
     }
-
-    while (count < IMHT * BYTEWIDTH) {
-      for (int w = 0; w < WORKERS && count < IMHT * BYTEWIDTH; w++) {
-        x = count % BYTEWIDTH;
-        y = count / BYTEWIDTH;
+    //While all the bytes haven't been sent, keep sending bytes to workers.
+    while (count < IMHT * BYTEWIDTH + WORKERS) {
+      for (int w = 0; w < WORKERS && count < IMHT * BYTEWIDTH + WORKERS; w++) {
+        x = getXfromCount(count);
+        y = getYfromCount(count);
         select {
           case fromButton :> exportCurrent:
-            printf("Received from button\n");
+            printf("Export button pressed.\n");
             w--;
             break;
-          case toWorkers[w] :> finishedBits[counts[w] / BYTEWIDTH][counts[w] % BYTEWIDTH]:
-            sendBytes(toWorkers[w], x, y, initialBits);
-            counts[w] = count;
-            count++;
+          case toWorkers[w] :> finishedBits[getYfromCount(counts[w])][getXfromCount(counts[w])]:
+            if(count < IMHT * BYTEWIDTH)  {
+              sendBytes(toWorkers[w], x, y, initialBits);
+            }
+            counts[w] = count++;
             break;
+
         }
       }
     }
 
-    for (int w = 0; w < WORKERS; w++) {
-      toWorkers[w] :> finishedBits[counts[w] / BYTEWIDTH][counts[w] % BYTEWIDTH];
-    }
-
     if (exportCurrent == 13) {
       outputImage(c_out, finishedBits);
-      exportCurrent = 0;
     }
 
     // cant seem to make this a function
-    for (int i = 0; i < IMHT; i++) {
-      for (int j = 0; j < BYTEWIDTH; j++) {
-        initialBits[i][j] = finishedBits[i][j];
+    for (int y = 0; y < IMHT; y++)  {
+      for (int x = 0; x < BYTEWIDTH; x++)  {
+        initialBits[y][x] = finishedBits[y][x];
       }
-    }
+    };
 
     printf("One processing round completed...\n");
   }
@@ -356,12 +358,12 @@ void DataOutStream(char outfname[], chanend c_in) {
         c_in :> line[x];
       }
       _writeoutline(line, IMWD);
-      printf("DataOutStream: Line written...\n");
+      printf("DataOutStream: Line %d written\n ", y);
     }
 
     //Close the PGM image
     _closeoutpgm();
-    printf("DataOutStream: Done...\n");
+    printf("\nDataOutStream: Done...\n");
   }
 
   return;

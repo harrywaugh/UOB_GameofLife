@@ -39,6 +39,8 @@
 <fDef name="fmodl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="frexpl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="gameOfLife" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
+<fDef name="getXfromCount" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
+<fDef name="getYfromCount" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="get_read_data" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="2"/>
 <fDef name="get_write_result" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="hypotl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
@@ -1302,6 +1304,13 @@
     </values>
   </arg>
 </fCall>
+<fCall name="initialiseBitsArray" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
 <fCall name="bytesToBits" global="true" numArgs="2">
   <arg num="0">
     <values>
@@ -1309,6 +1318,20 @@
     </values>
   </arg>
   <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="getXfromCount" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="getYfromCount" global="true" numArgs="1">
+  <arg num="0">
     <values>
       <value type="unknown"/>
     </values>
@@ -1336,7 +1359,35 @@
     </values>
   </arg>
 </fCall>
+<fCall name="getXfromCount" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="getYfromCount" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
 <fCall name="printf" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="getYfromCount" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="getXfromCount" global="true" numArgs="1">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1432,8 +1483,13 @@
     </values>
   </arg>
 </fCall>
-<fCall name="printf" global="true" numArgs="1">
+<fCall name="printf" global="true" numArgs="2">
   <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
     <values>
       <value type="unknown"/>
     </values>
