@@ -1,19 +1,22 @@
 #include "pgmIO.h"
 
+const char infname[] = "256x256.pgm";
+const char outfname[] = "testout.pgm";
+
 FILE *_INFP = NULL;
 FILE *_OUTFP = NULL;
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //Line-wise pgm in:
-int _openinpgm(char fname[], int width, int height)
+int _openinpgm(int width, int height)
 {
 	char str[ 64 ];
     int inwidth, inheight;
 
-	_INFP = fopen( fname, "rb" );
+	_INFP = fopen( infname, "rb" );
 	if( _INFP == NULL )
 	{
-		printf( "Could not open %s.\n", fname );
+		printf( "Could not open %s.\n", infname );
 		return -1;
 	}
 	//Strip off header
@@ -66,14 +69,14 @@ int _closeinpgm()
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //Line-wise pgm out:
-int _openoutpgm(char fname[], int width, int height)
+int _openoutpgm(int width, int height)
 {
     char hdr[ 64 ];
 
-	_OUTFP = fopen( fname, "wb" );
+	_OUTFP = fopen( outfname, "wb" );
 	if( _OUTFP == NULL )
 	{
-		printf( "Could not open %s.\n", fname );
+		printf( "Could not open %s.\n", outfname );
 		return -1;
 	}
 

@@ -79,6 +79,10 @@
   <fCall global="true" name="_readpgm.maxcores"/>
   <fCall global="true" name="_readpgm.maxtimers"/>
   <fCall global="true" name="_readpgm.maxchanends"/>
+  <fCall global="true" name="infname.globound"/>
+  <fCall global="true" name="infname"/>
+  <fCall global="true" name="outfname.globound"/>
+  <fCall global="true" name="outfname"/>
   <fCall global="true" name="_INFP"/>
   <fCall global="true" name="_OUTFP"/>
   <fCall global="true" name="fopen"/>

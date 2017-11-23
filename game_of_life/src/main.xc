@@ -8,17 +8,19 @@
 #include "i2c.h"
 #include <math.h>
 
-#define  IMHT 64                  //Image height in bits
-#define  IMWD 64                  //Image width in bits
-#define  BYTEWIDTH 8              //Image width in bytes
-#define  WORKERS 4                //Number of workers
+#define IMHT 256                  //Image height in bits
+#define IMWD 256                  //Image width in bits
+#define BYTEWIDTH 32              //Image width in bytes
+#define WORKERS 11                 //Number of workers(MUST BE 11 OR LESS)
+#define WORKERS2 3                //(MUST BE LESS THAN 4)
+
 
 typedef unsigned char uchar;      //Using uchar as shorthand
 
-port p_scl = XS1_PORT_1E;         //Interface ports to orientation
-port p_sda = XS1_PORT_1F;
-port buttons = XS1_PORT_4E;       //Buttons port
-port LEDs = XS1_PORT_4F;          //Leds port
+on tile[0] : port p_scl = XS1_PORT_1E;         //Interface ports to orientation
+on tile[0] : port p_sda = XS1_PORT_1F;
+on tile[0] : port buttons = XS1_PORT_4E;       //Buttons port
+on tile[0] : port LEDs = XS1_PORT_4F;          //Leds port
 
 #define FXOS8700EQ_I2C_ADDR 0x1E  //Register addresses for orientation
 #define FXOS8700EQ_XYZ_DATA_CFG_REG 0x0E
@@ -67,15 +69,16 @@ void buttonListener( in port b, chanend toDistributer) {
 // Read Image from PGM file from path infname[] to channel c_out
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void DataInStream(char infname[], chanend c_out) {
+void DataInStream(chanend c_out) {
   int res;
   uchar line[IMWD];
   printf("DataInStream: Start...\n");
 
+
   //Open PGM file
-  res = _openinpgm(infname, IMWD, IMHT);
+  res = _openinpgm(IMWD, IMHT);
   if (res) {
-    printf("DataInStream: Error openening %s\n.", infname);
+    printf("DataInStream: Error opening file\n");
     return;
   }
 
@@ -338,7 +341,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 // Write pixel stream from channel c_in to PGM image file
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void DataOutStream(char outfname[], chanend c_in) {
+void DataOutStream(chanend c_in) {
   while (1) {
     c_in :> int value;
     int res;
@@ -346,9 +349,9 @@ void DataOutStream(char outfname[], chanend c_in) {
 
     //Open PGM file
     printf("DataOutStream: Start...\n");
-    res = _openoutpgm(outfname, IMWD, IMHT);
+    res = _openoutpgm(IMWD, IMHT);
     if (res) {
-      printf("DataOutStream: Error opening %s\n.", outfname);
+      printf("DataOutStream: Error opening file\n");
       return;
     }
 
@@ -411,6 +414,11 @@ void orientation(client interface i2c_master_if i2c, chanend toDist) {
   }
 }
 
+int min(int a, int b)  {
+  if(a < b)  return a;
+  return b;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Orchestrate concurrent system and start up all threads
@@ -418,19 +426,20 @@ void orientation(client interface i2c_master_if i2c, chanend toDist) {
 /////////////////////////////////////////////////////////////////////////////////////////
 int main(void) {
   i2c_master_if i2c[1]; //interface to orientation
-  char infname[] = "64x64.pgm"; //put your input image path here
-  char outfname[] = "testout.pgm"; //put your output image path here
   chan c_inIO, c_outIO, c_control, buttonToDist; //extend your channel definitions here
   chan workers[WORKERS];
   par {
-    i2c_master(i2c, 1, p_scl, p_sda, 10); //server thread providing orientation data
-    orientation(i2c[0], c_control); //client thread reading orientation data
-    DataInStream(infname, c_inIO); //thread to read in a PGM image
-    DataOutStream(outfname, c_outIO); //thread to write out a PGM image
-    distributor(c_inIO, c_outIO, c_control, buttonToDist, workers); //thread to coordinate work on image
-    buttonListener(buttons, buttonToDist);
-    par(int i = 0; i < WORKERS; i++)  {
-      worker(workers[i], i);
+    on tile[0] : i2c_master(i2c, 1, p_scl, p_sda, 10); //server thread providing orientation data
+    on tile[0] : orientation(i2c[0], c_control); //client thread reading orientation data
+    on tile[0] : DataInStream(c_inIO); //thread to read in a PGM image
+    on tile[0] : DataOutStream(c_outIO); //thread to write out a PGM image
+    on tile[0] : distributor(c_inIO, c_outIO, c_control, buttonToDist, workers); //thread to coordinate work on image
+    on tile[0] : buttonListener(buttons, buttonToDist);
+    par (int i = 0; i < WORKERS - WORKERS2; i++)  {
+      on tile[1] : worker(workers[i], i);
+    }
+    par (int j = WORKERS-WORKERS2; j < WORKERS; j++)  {
+      on tile[0] : worker(workers[j], j);
     }
   }
   return 0;
