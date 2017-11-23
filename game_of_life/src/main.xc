@@ -11,7 +11,7 @@
 #define  IMHT 64                  //Image height in bits
 #define  IMWD 64                  //Image width in bits
 #define  BYTEWIDTH 8              //Image width in bytes
-#define  WORKERS 3                //Number of workers
+#define  WORKERS 4                //Number of workers
 
 typedef unsigned char uchar;      //Using uchar as shorthand
 
@@ -429,9 +429,9 @@ int main(void) {
     DataOutStream(outfname, c_outIO); //thread to write out a PGM image
     distributor(c_inIO, c_outIO, c_control, buttonToDist, workers); //thread to coordinate work on image
     buttonListener(buttons, buttonToDist);
-    worker(workers[0], 0);
-    worker(workers[1], 1);
-    worker(workers[2], 2);
+    par(int i = 0; i < WORKERS; i++)  {
+      worker(workers[i], i);
+    }
   }
   return 0;
 }
