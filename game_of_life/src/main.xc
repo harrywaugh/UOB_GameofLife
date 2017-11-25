@@ -11,7 +11,7 @@
 #define IMHT 256                  //Image height in bits
 #define IMWD 256                  //Image width in bits
 #define BYTEWIDTH 32              //Image width in bytes
-#define WORKERS 11                 //Number of workers(MUST BE 11 OR LESS)
+#define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 
 
@@ -34,17 +34,27 @@ on tile[0] : port LEDs = XS1_PORT_4F;          //Leds port
 #define FXOS8700EQ_OUT_Z_LSB 0x6
 
 //DISPLAYS an LED pattern
-//int showLEDs(out port p, chanend fromVisualiser) {
-//  int pattern; //1st bit...separate green LED
-//               //2nd bit...blue LED
-//               //3rd bit...green LED
-//               //4th bit...red LED
-//  while (1) {
-//    fromVisualiser :> pattern;   //receive new pattern from visualiser
-//    p <: pattern;                //send pattern to LED port
-//  }
-//  return 0;
-//}
+int showLEDs(out port p, chanend fromDistributer) {
+  int pattern; //1st bit...separate green LED
+               //2nd bit...blue LED
+               //3rd bit...green LED
+               //4th bit...red LED
+
+  // 1 = just sep green LED
+  // 2 = just blue LED
+  // 3 = sep green and blue LED
+  // 4 = just green LED
+  // 5 = green and sep green LED
+  // 6 = green and blue LED
+  // 7 = green and blue and sep green LED
+  // 8 = red LED
+
+  while (1) {
+    fromDistributer :> pattern;   //receive new pattern from visualiser
+    p <: pattern;                //send pattern to LED port
+  }
+  return 0;
+}
 
 //READ BUTTONS and send button pattern to userAnt
 void buttonListener( in port b, chanend toDistributer) {
@@ -260,8 +270,9 @@ void sendBytes(chanend worker, int x, int y, uchar bits[IMHT][BYTEWIDTH]) {
   }
 }
 
-int getXfromCount(int count)  {  return count % BYTEWIDTH;  }
-int getYfromCount(int count)  {  return count / BYTEWIDTH;  }
+int getXfromCount(int count) { return count % BYTEWIDTH; }
+
+int getYfromCount(int count) { return count / BYTEWIDTH; }
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -269,7 +280,7 @@ int getYfromCount(int count)  {  return count / BYTEWIDTH;  }
 // Recompiles them into next iteration of matrix. Handles exporting of matrix.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButton, chanend toWorkers[WORKERS]) {
+void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButton, chanend toLEDs, chanend toWorkers[WORKERS]) {
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf("ProcessImage: Start, size = %dx%d\n", IMHT, IMWD);
   printf("Waiting for SW1 Button Press...\n");
@@ -279,7 +290,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   printf("Processing...\n");
   uchar bytes[IMHT][IMWD], initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
 
+  toLEDs <: 4;
   inputImage(c_in, bytes);
+  toLEDs <: 0;
 
   //Initialise arrays.
   initialiseBitsArray(initialBits);
@@ -287,6 +300,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
   //Convert matrix to new matrix where pixels are represented by bits, not bytes.
   bytesToBits(bytes, initialBits);
+
+  int iteration = 0;
+  int pattern = 1;
 
   //Loop until the universe implodes
   while (2 == 2) {
@@ -322,7 +338,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
     }
 
     if (exportCurrent == 13) {
+      toLEDs <: 2;
       outputImage(c_out, finishedBits);
+      toLEDs <: pattern;
     }
 
     // cant seem to make this a function
@@ -331,6 +349,13 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         initialBits[y][x] = finishedBits[y][x];
       }
     };
+
+
+    if (iteration % 2 == 0) pattern = 1;
+    else pattern = 0;
+
+    toLEDs <: pattern;
+    iteration++;
 
     printf("One processing round completed...\n");
   }
@@ -426,21 +451,22 @@ int min(int a, int b)  {
 /////////////////////////////////////////////////////////////////////////////////////////
 int main(void) {
   i2c_master_if i2c[1]; //interface to orientation
-  chan c_inIO, c_outIO, c_control, buttonToDist; //extend your channel definitions here
+  chan c_inIO, c_outIO, c_control, buttonToDist, distToLED; //extend your channel definitions here
   chan workers[WORKERS];
   par {
     on tile[0] : i2c_master(i2c, 1, p_scl, p_sda, 10); //server thread providing orientation data
     on tile[0] : orientation(i2c[0], c_control); //client thread reading orientation data
     on tile[0] : DataInStream(c_inIO); //thread to read in a PGM image
     on tile[0] : DataOutStream(c_outIO); //thread to write out a PGM image
-    on tile[0] : distributor(c_inIO, c_outIO, c_control, buttonToDist, workers); //thread to coordinate work on image
+    on tile[0] : distributor(c_inIO, c_outIO, c_control, buttonToDist, distToLED, workers); //thread to coordinate work on image
     on tile[0] : buttonListener(buttons, buttonToDist);
-    par (int i = 0; i < WORKERS - WORKERS2; i++)  {
+    on tile[0] : showLEDs(LEDs, distToLED);
+    par (int i = 0; i < WORKERS; i++)  {
       on tile[1] : worker(workers[i], i);
     }
-    par (int j = WORKERS-WORKERS2; j < WORKERS; j++)  {
-      on tile[0] : worker(workers[j], j);
-    }
+//    par (int j = WORKERS-WORKERS2; j < WORKERS; j++)  {
+//      on tile[0] : worker(workers[j], j);
+//    }
   }
   return 0;
 }
