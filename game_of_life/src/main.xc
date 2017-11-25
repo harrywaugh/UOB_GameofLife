@@ -274,6 +274,20 @@ int getXfromCount(int count) { return count % BYTEWIDTH; }
 
 int getYfromCount(int count) { return count / BYTEWIDTH; }
 
+int calculateLiveCells(uchar bits[IMHT][BYTEWIDTH]) {
+  int live = 0;
+  uchar mask;
+  for (int y = 0; y < IMHT; y++) {
+    for (int x = 0; x < IMWD; x++) {
+      mask = (uchar) pow(2, (x % 8));
+      if ((bits[y][x/8] & mask) == mask) { // if alive
+        live++;
+      }
+    }
+  }
+  return live;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Takes in orginal matrix of pixels. Handles which workers get bytes.
@@ -329,10 +343,13 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
           case fromAcc :> int tilted:
             printf("recieved tilt value %d\n", tilted);
             if (tilted == 1) {
-              printf("paused\n");
+              printf("Paused...\n");
               toLEDs <: 8;
+              printf("Rounds processed so far: %d\n", iteration);
+              printf("Current live cells: %d\n", calculateLiveCells(initialBits));
+              printf("Time elapsed so far: \n");
               fromAcc :> tilted;
-              printf("unpaused\n");
+              printf("Resuming...\n");
               toLEDs <: pattern;
             }
             break;
