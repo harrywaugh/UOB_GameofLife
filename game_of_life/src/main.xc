@@ -326,6 +326,16 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             printf("Export button pressed.\n");
             w--;
             break;
+          case fromAcc :> int tilted:
+            printf("recieved tilt value %d\n", tilted);
+            if (tilted == 1) {
+              printf("paused\n");
+              toLEDs <: 8;
+              fromAcc :> tilted;
+              printf("unpaused\n");
+              toLEDs <: pattern;
+            }
+            break;
           case toWorkers[w] :> finishedBits[getYfromCount(counts[w])][getXfromCount(counts[w])]:
             if(count < IMHT * BYTEWIDTH)  {
               sendBytes(toWorkers[w], x, y, initialBits);
@@ -429,11 +439,15 @@ void orientation(client interface i2c_master_if i2c, chanend toDist) {
     //get new x-axis tilt value
     int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
 
-    //send signal to distributor after first tilt
     if (!tilted) {
       if (x > 30) {
         tilted = 1 - tilted;
-        //toDist <: 1;
+        toDist <: 1;
+      }
+    } else {
+      if (x <= 30) {
+        tilted = 1 - tilted;
+        toDist <: 0;
       }
     }
   }
