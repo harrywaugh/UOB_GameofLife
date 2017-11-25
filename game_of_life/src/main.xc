@@ -343,7 +343,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             w--;
             break;
           case fromAcc :> int tilted:
-            printf("recieved tilt value %d\n", tilted);
+            //printf("recieved tilt value %d\n", tilted);
             if (tilted == 1) {
               printf("Paused...\n");
               tmr :> timeElapsed;
