@@ -136,6 +136,30 @@ int countNeighbours(int x, int y, uchar matrix[3][3]) {
   return count;
 }
 
+int countNeighbours2(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
+  //int BYTEHEIGHT = IMHT/WORKERS + 2;
+  int BITWIDTH = IMWD;
+  int count = 0;
+  uchar mask;
+
+  for (int i = y - 1; i < y + 2; i++) {
+    for (int j = x + BITWIDTH - 1; j < x + 2; j++) {
+      mask = 1 << ((x+j) % 8);
+      //if ((matrix[y + i][((x + j) % BITWIDTH) / 8] >> ((x+j)%8))) {}
+      if ((matrix[y + i][((x + j) % BITWIDTH) / 8] & mask) == mask) {
+        count++;
+      }
+    }
+  }
+
+  mask = 1 << (x % 8);
+  if ((matrix[y][x / 8] & mask) == mask) {
+    count --;
+  }
+
+  return count;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Print matrix bytes of height of image in bits, and width of image in bytes.
@@ -189,6 +213,30 @@ void gameOfLife(uchar matrix[3][3]) {
   }
 }
 
+void gameOfLife2(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
+  uchar mask;
+  uchar oldMatrix[IMHT/WORKERS + 2][BYTEWIDTH];
+  for (int y = 0; y < IMHT/WORKERS + 2; y++)  {
+    for (int x = 0; x < BYTEWIDTH; x++)  {
+      oldMatrix[y][x] = matrix[y][x];
+    }
+  }
+
+  for (int y = 1; y < IMHT/WORKERS + 1; y++) {
+    for (int x = 0; x < IMWD; x++) {
+      int neighbourCount = countNeighbours2(x, y, oldMatrix);
+      //mask = (uchar) pow(2, x % 8);
+      mask = 1 << (x % 8);
+      if ((oldMatrix[y][x] & mask) == mask) { // if alive
+        if (neighbourCount != 2 && neighbourCount != 3) matrix[y][x] = matrix[y][x] ^ mask;
+      } else { // if dead
+        if (neighbourCount == 3) matrix[y][x] = matrix[y][x] | mask;
+      }
+    }
+  }
+
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 // Converts the given matrix of uchars, where each uchar is either 255 or 0
@@ -231,6 +279,24 @@ void worker(chanend toDistributer, int i) {
   }
 }
 
+void worker2(chanend toDistributer, int i) {
+  printf("WORKER %d STARTED\n", i);
+  while (2 == 2) {
+    uchar list[IMHT/WORKERS + 2][BYTEWIDTH];
+    for (int x = 0; x < BYTEWIDTH; x++) {
+      for (int y = 0; y < IMHT/WORKERS + 2; y++) {
+        toDistributer :> list[y][x];
+      }
+    }
+    gameOfLife2(list);
+    for (int x = 0; x < BYTEWIDTH; x++) {
+      for (int y = 1; y < IMHT/WORKERS + 1; y++) {
+        toDistributer :> list[y][x];
+      }
+    }
+  }
+}
+
 void inputImage(chanend input, uchar bytes[IMHT][IMWD]) {
   for (int y = 0; y < IMHT; y++) {
     for (int x = 0; x < IMWD; x++) {
@@ -266,6 +332,14 @@ void sendBytes(chanend worker, int x, int y, uchar bits[IMHT][BYTEWIDTH]) {
   for (int i = BYTEWIDTH - 1; i < BYTEWIDTH + 2; i++) {
     for (int j = IMHT - 1; j < IMHT + 2; j++) {
       worker <: bits[(y+j) % IMHT][(x+i) % BYTEWIDTH];
+    }
+  }
+}
+
+void sendBytes2(chanend worker, int strip, uchar bits[IMHT][BYTEWIDTH]) {
+  for (int x = 0; x < BYTEWIDTH; x++) {
+    for (int y = strip - 1; y < strip + IMHT/WORKERS + 1; y++) {
+      worker <: bits[(y + IMHT) % IMHT][x];
     }
   }
 }
