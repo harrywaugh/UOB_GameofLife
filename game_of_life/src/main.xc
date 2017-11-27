@@ -11,7 +11,7 @@
 #define IMHT 256                  //Image height in bits
 #define IMWD 256                  //Image width in bits
 #define BYTEWIDTH 32              //Image width in bytes
-#define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
+#define WORKERS 4                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 
 
@@ -112,6 +112,8 @@ void DataInStream(chanend c_out) {
 // Returns the amount of 1's that surround the desired bit.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
+
+/*
 int countNeighbours(int x, int y, uchar matrix[3][3]) {
   int BYTEHEIGHT = 3;
   int BITWIDTH = 24;
@@ -135,18 +137,19 @@ int countNeighbours(int x, int y, uchar matrix[3][3]) {
   }
   return count;
 }
+*/
 
-int countNeighbours2(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
+int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
   //int BYTEHEIGHT = IMHT/WORKERS + 2;
   int BITWIDTH = IMWD;
   int count = 0;
   uchar mask;
 
   for (int i = y - 1; i < y + 2; i++) {
-    for (int j = x + BITWIDTH - 1; j < x + 2; j++) {
-      mask = 1 << ((x+j) % 8);
+    for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) {
+      mask = 1 << (j % 8);
       //if ((matrix[y + i][((x + j) % BITWIDTH) / 8] >> ((x+j)%8))) {}
-      if ((matrix[y + i][((x + j) % BITWIDTH) / 8] & mask) == mask) {
+      if ((matrix[i][(j % BITWIDTH) / 8] & mask) == mask) {
         count++;
       }
     }
@@ -187,6 +190,8 @@ void printMatrix(uchar matrix[IMHT][BYTEWIDTH]) {
 //Performs one iteration of Game of life on the middle byte of the matrix.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
+
+/*
 void gameOfLife(uchar matrix[3][3]) {
   //Copies previous matrix
   uchar mask;
@@ -212,8 +217,9 @@ void gameOfLife(uchar matrix[3][3]) {
     }
   }
 }
+*/
 
-void gameOfLife2(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
+void gameOfLife(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
   uchar mask;
   uchar oldMatrix[IMHT/WORKERS + 2][BYTEWIDTH];
   for (int y = 0; y < IMHT/WORKERS + 2; y++)  {
@@ -224,13 +230,13 @@ void gameOfLife2(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
 
   for (int y = 1; y < IMHT/WORKERS + 1; y++) {
     for (int x = 0; x < IMWD; x++) {
-      int neighbourCount = countNeighbours2(x, y, oldMatrix);
-      //mask = (uchar) pow(2, x % 8);
-      mask = 1 << (x % 8);
-      if ((oldMatrix[y][x] & mask) == mask) { // if alive
-        if (neighbourCount != 2 && neighbourCount != 3) matrix[y][x] = matrix[y][x] ^ mask;
+      int neighbourCount = countNeighbours(x, y, oldMatrix);
+      mask = (uchar) pow(2, x % 8);
+      //mask = 1 << (x % 8);
+      if ((oldMatrix[y][x/8] & mask) == mask) { // if alive
+        if (neighbourCount != 2 && neighbourCount != 3) matrix[y][x/8] = matrix[y][x/8] ^ mask;
       } else { // if dead
-        if (neighbourCount == 3) matrix[y][x] = matrix[y][x] | mask;
+        if (neighbourCount == 3) matrix[y][x/8] = matrix[y][x/8] | mask;
       }
     }
   }
@@ -265,6 +271,8 @@ void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
 // Sends the changed byte(1, 1) back to distributer.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
+
+/*
 void worker(chanend toDistributer, int i) {
   printf("WORKER %d STARTED\n", i);
   while (2 == 2) {
@@ -278,20 +286,23 @@ void worker(chanend toDistributer, int i) {
     toDistributer <: list[1][1];
   }
 }
+*/
 
-void worker2(chanend toDistributer, int i) {
+void worker(chanend toDistributer, int i) {
   printf("WORKER %d STARTED\n", i);
   while (2 == 2) {
     uchar list[IMHT/WORKERS + 2][BYTEWIDTH];
     for (int x = 0; x < BYTEWIDTH; x++) {
       for (int y = 0; y < IMHT/WORKERS + 2; y++) {
         toDistributer :> list[y][x];
+        //printf("%d ", list[y][x]);
       }
     }
-    gameOfLife2(list);
+    gameOfLife(list);
+    toDistributer <: 1;
     for (int x = 0; x < BYTEWIDTH; x++) {
       for (int y = 1; y < IMHT/WORKERS + 1; y++) {
-        toDistributer :> list[y][x];
+        toDistributer <: list[y][x];
       }
     }
   }
@@ -328,17 +339,19 @@ void outputImage(chanend output, uchar bits[IMHT][BYTEWIDTH]) {
   }
 }
 
+/*
 void sendBytes(chanend worker, int x, int y, uchar bits[IMHT][BYTEWIDTH]) {
   for (int i = BYTEWIDTH - 1; i < BYTEWIDTH + 2; i++) {
     for (int j = IMHT - 1; j < IMHT + 2; j++) {
       worker <: bits[(y+j) % IMHT][(x+i) % BYTEWIDTH];
     }
-  }
+  })
 }
+*/
 
-void sendBytes2(chanend worker, int strip, uchar bits[IMHT][BYTEWIDTH]) {
+void sendBytes(chanend worker, int strip, uchar bits[IMHT][BYTEWIDTH]) {
   for (int x = 0; x < BYTEWIDTH; x++) {
-    for (int y = strip - 1; y < strip + IMHT/WORKERS + 1; y++) {
+    for (int y = strip - 1; y < (strip + IMHT/WORKERS) + 1; y++) {
       worker <: bits[(y + IMHT) % IMHT][x];
     }
   }
@@ -368,6 +381,8 @@ int calculateLiveCells(uchar bits[IMHT][BYTEWIDTH]) {
 // Recompiles them into next iteration of matrix. Handles exporting of matrix.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
+
+/*
 void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButton, chanend toLEDs, chanend toWorkers[WORKERS]) {
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf("ProcessImage: Start, size = %dx%d\n", IMHT, IMWD);
@@ -399,7 +414,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   //Loop until the universe implodes
   while (2 == 2) {
 
-    int count = 0, exportCurrent = 0, counts[WORKERS], x, y;
+    int count = 0, exportCurrent = 0, counts[WORKERS];
 
     //Send initial N bytes to each worker.
     for (int w = 0; w < WORKERS; w++) {
@@ -443,6 +458,99 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       }
     }
 
+    if (exportCurrent == 13) {
+      toLEDs <: 2;
+      outputImage(c_out, finishedBits);
+      toLEDs <: pattern;
+    }
+
+    // cant seem to make this a function
+    for (int y = 0; y < IMHT; y++)  {
+      for (int x = 0; x < BYTEWIDTH; x++)  {
+        initialBits[y][x] = finishedBits[y][x];
+      }
+    };
+
+
+    if (iteration % 2 == 0) pattern = 1;
+    else pattern = 0;
+
+    toLEDs <: pattern;
+    iteration++;
+
+    printf("One processing round completed...\n");
+  }
+}
+*/
+
+void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButton, chanend toLEDs, chanend toWorkers[WORKERS]) {
+  //Starting up and wait for tilting of the xCore-200 Explorer
+  printf("ProcessImage: Start, size = %dx%d\n", IMHT, IMWD);
+  printf("Waiting for SW1 Button Press...\n");
+
+  fromButton :> int value;
+
+  printf("Processing...\n");
+  uchar bytes[IMHT][IMWD], initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
+
+  toLEDs <: 4;
+  inputImage(c_in, bytes);
+  toLEDs <: 0;
+
+  //Initialise arrays.
+  initialiseBitsArray(initialBits);
+  initialiseBitsArray(finishedBits);
+
+  //Convert matrix to new matrix where pixels are represented by bits, not bytes.
+  bytesToBits(bytes, initialBits);
+
+  int iteration = 0;
+  int pattern = 1;
+  int exportCurrent = 0;
+  timer tmr;
+  uint32_t timeElapsed;
+  uint32_t time;
+  tmr :> time;
+
+  int stripsComplete = 0;
+  while (2 == 2)  {
+    stripsComplete = 0;
+    for (int w = 0;  w < WORKERS; w++)  {
+      printf("Send Bytes %d\n ", w);
+      sendBytes(toWorkers[w], w*(IMHT/WORKERS), initialBits);
+    }
+    while (stripsComplete < WORKERS)  {
+      for(int w = 0; w < WORKERS; w++)  {
+        select {
+          case fromButton :> exportCurrent:
+            printf("Export button pressed.\n");
+            w--;
+            break;
+          case fromAcc :> int tilted:
+            //printf("recieved tilt value %d\n", tilted);
+            if (tilted == 1) {
+              printf("Paused...\n");
+              tmr :> timeElapsed;
+              toLEDs <: 8;
+              printf("Rounds processed so far: %d\n", iteration);
+              printf("Current live cells: %d\n", calculateLiveCells(initialBits));
+              printf("Time elapsed so far: %u\n", timeElapsed - time);
+              fromAcc :> tilted;
+              printf("Resuming...\n");
+              toLEDs <: pattern;
+            }
+            break;
+          case toWorkers[w] :> int received:
+            for (int x = 0; x < BYTEWIDTH; x++) {
+              for (int y = w*(IMHT/WORKERS); y < (w+1)*(IMHT/WORKERS); y++) {
+                toWorkers[w] :> finishedBits[y][x];
+              }
+            }
+            stripsComplete++;
+            break;
+        }
+      }
+    }
     if (exportCurrent == 13) {
       toLEDs <: 2;
       outputImage(c_out, finishedBits);
@@ -547,11 +655,6 @@ void orientation(client interface i2c_master_if i2c, chanend toDist) {
       }
     }
   }
-}
-
-int min(int a, int b)  {
-  if(a < b)  return a;
-  return b;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
