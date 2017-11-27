@@ -74,37 +74,7 @@ void buttonListener( in port b, chanend toDistributer) {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Read Image from PGM file from path infname[] to channel c_out
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-void DataInStream(chanend c_out) {
-  int res;
-  uchar line[IMWD];
-  printf("DataInStream: Start...\n");
 
-
-  //Open PGM file
-  res = _openinpgm(IMWD, IMHT);
-  if (res) {
-    printf("DataInStream: Error opening file\n");
-    return;
-  }
-
-  //Read image line-by-line and send byte by byte to channel c_out
-  for (int y = 0; y < IMHT; y++) {
-    _readinline(line, IMWD);
-    for (int x = 0; x < IMWD; x++) {
-      c_out <: line[x];
-    }
-  }
-
-  //Close PGM image file
-  _closeinpgm();
-  printf("DataInStream: Done...\n");
-  return;
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -308,9 +278,9 @@ void worker(chanend toDistributer, int i) {
   }
 }
 
-void inputImage(chanend input, uchar bytes[IMHT][IMWD]) {
+void inputImage(chanend input, uchar bytes[IMHT][BYTEWIDTH]) {
   for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < IMWD; x++) {
+    for (int x = 0; x < BYTEWIDTH; x++) {
       input :> bytes[y][x];
     }
   }
@@ -381,6 +351,51 @@ int calculateLiveCells(uchar bits[IMHT][BYTEWIDTH]) {
 // Recompiles them into next iteration of matrix. Handles exporting of matrix.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+// Read Image from PGM file from path infname[] to channel c_out
+//
+/////////////////////////////////////////////////////////////////////////////////////////
+void DataInStream(chanend c_out) {
+  int res;
+  uchar line[IMWD];
+  printf("DataInStream: Start...\n");
+
+
+  //Open PGM file
+  res = _openinpgm(IMWD, IMHT);
+  if (res) {
+    printf("DataInStream: Error opening file\n");
+    return;
+  }
+  uchar matrix[IMHT][IMWD];
+  //Read image line-by-line and send byte by byte to channel c_out
+  for (int y = 0; y < IMHT; y++) {
+    _readinline(line, IMWD);
+    for (int x = 0; x < IMWD; x++) {
+      matrix[y][x] = line[x];
+    }
+  }
+
+  uchar bits[IMHT][BYTEWIDTH];
+
+  //Initialise arrays.
+  //initialiseBitsArray(bits);
+
+  bytesToBits(matrix, bits);
+
+  for (int i = 0; i < IMHT; i++)  {
+    for (int j = 0; j < BYTEWIDTH; j++)  {
+      c_out <: matrix[j][i];
+    }
+  }
+
+  //Close PGM image file
+  _closeinpgm();
+  printf("DataInStream: Done...\n");
+  return;
+}
 
 /*
 void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButton, chanend toLEDs, chanend toWorkers[WORKERS]) {
@@ -493,16 +508,17 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   printf("Processing...\n");
   uchar bytes[IMHT][IMWD], initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
 
-  toLEDs <: 4;
-  inputImage(c_in, bytes);
-  toLEDs <: 0;
-
   //Initialise arrays.
   initialiseBitsArray(initialBits);
+
+  toLEDs <: 4;
+  inputImage(c_in, initialBits);
+  toLEDs <: 0;
+
+
   initialiseBitsArray(finishedBits);
 
-  //Convert matrix to new matrix where pixels are represented by bits, not bytes.
-  bytesToBits(bytes, initialBits);
+
 
   int iteration = 0;
   int pattern = 1;
