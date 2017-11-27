@@ -319,6 +319,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   int pattern = 1;
   timer tmr;
   uint32_t timeElapsed;
+  uint32_t time;
+  tmr :> time;
 
   //Loop until the universe implodes
   while (2 == 2) {
@@ -350,7 +352,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
               toLEDs <: 8;
               printf("Rounds processed so far: %d\n", iteration);
               printf("Current live cells: %d\n", calculateLiveCells(initialBits));
-              printf("Time elapsed so far: %u\n", timeElapsed);
+              printf("Time elapsed so far: %u\n", timeElapsed - time);
               fromAcc :> tilted;
               printf("Resuming...\n");
               toLEDs <: pattern;
