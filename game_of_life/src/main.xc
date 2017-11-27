@@ -508,8 +508,6 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   printf("Processing...\n");
   uchar bytes[IMHT][IMWD], initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
 
-  //Initialise arrays.
-  initialiseBitsArray(initialBits);
 
   toLEDs <: 4;
   inputImage(c_in, initialBits);
@@ -521,18 +519,19 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
 
   int iteration = 0;
-  int pattern = 1;
   int exportCurrent = 0;
+  int stripsComplete = 0;
+
+  int pattern = 1;
   timer tmr;
   uint32_t timeElapsed;
   uint32_t time;
   tmr :> time;
 
-  int stripsComplete = 0;
   while (2 == 2)  {
     stripsComplete = 0;
+    exportCurrent = 0;
     for (int w = 0;  w < WORKERS; w++)  {
-      printf("Send Bytes %d\n ", w);
       sendBytes(toWorkers[w], w*(IMHT/WORKERS), initialBits);
     }
     while (stripsComplete < WORKERS)  {
@@ -542,20 +541,20 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             printf("Export button pressed.\n");
             w--;
             break;
-          case fromAcc :> int tilted:
-            //printf("recieved tilt value %d\n", tilted);
-            if (tilted == 1) {
-              printf("Paused...\n");
-              tmr :> timeElapsed;
-              toLEDs <: 8;
-              printf("Rounds processed so far: %d\n", iteration);
-              printf("Current live cells: %d\n", calculateLiveCells(initialBits));
-              printf("Time elapsed so far: %u\n", timeElapsed - time);
-              fromAcc :> tilted;
-              printf("Resuming...\n");
-              toLEDs <: pattern;
-            }
-            break;
+//          case fromAcc :> int tilted:
+//            //printf("recieved tilt value %d\n", tilted);
+//            if (tilted == 1) {
+//              printf("Paused...\n");
+//              tmr :> timeElapsed;
+//              toLEDs <: 8;
+//              printf("Rounds processed so far: %d\n", iteration);
+//              printf("Current live cells: %d\n", calculateLiveCells(initialBits));
+//              printf("Time elapsed so far: %u\n", timeElapsed - time);
+//              fromAcc :> tilted;
+//              printf("Resuming...\n");
+//              toLEDs <: pattern;
+//            }
+//            break;
           case toWorkers[w] :> int received:
             for (int x = 0; x < BYTEWIDTH; x++) {
               for (int y = w*(IMHT/WORKERS); y < (w+1)*(IMHT/WORKERS); y++) {
