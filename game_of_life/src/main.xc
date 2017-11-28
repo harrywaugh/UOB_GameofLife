@@ -84,31 +84,6 @@ void buttonListener( in port b, chanend toDistributer) {
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-int countNeighbours(int x, int y, uchar matrix[3][3]) {
-  int BYTEHEIGHT = 3;
-  int BITWIDTH = 24;
-  int count = 0;
-  uchar mask;
-
-  for (int i = BYTEHEIGHT - 1; i < BYTEHEIGHT + 2; i++) { //Loops from 2 -> 4. Selects the desired row.
-    for (int j = BITWIDTH - 1; j < BITWIDTH + 2; j++) { //Loops from 23 -> 25. Selects the desired column.
-      //Creates a bit mask, (E.G 2^3, is 0000 0100), of the relevant bit position.
-      mask = (uchar) pow(2, (x + j) % 8);
-      //Match byte that desired bit is in, against the mask, this checks if nth bit is a 1 or not.
-      if ((matrix[(y + i) % BYTEHEIGHT][((x + j) % BITWIDTH) / 8] & mask) == mask) {
-        count++;
-      }
-    }
-  }
-  //If desired bit is a 1, it removes this. Previous for loop checks all neighbours and itself.
-  mask = (uchar) pow(2, x % 8);
-  if ((matrix[y][x / 8] & mask) == mask) {
-    count--;
-  }
-  return count;
-}
-*/
 
 int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
   //int BYTEHEIGHT = IMHT/WORKERS + 2;
@@ -147,14 +122,6 @@ void printMatrix(uchar matrix[IMHT][BYTEWIDTH]) {
   printf("\n");
 }
 
-//void duplicateMatrix(int xLen, int yLen, uchar oldMatrix[yLen][xLen], uchar newMatrix[yLen][xLen])  {
-//  for (int y = 0; y < yLen; y++)  {
-//    for (int x = 0; x < xLen; x++)  {
-//      newMatrix[y][x] = oldMatrix[y][x];
-//    }
-//  }
-//}
-
 /////////////////////////////////////////////////////////////////////////////////////////
 //
 //GameOfLife, takes a 3 by 3 matrix of bytes.
@@ -162,33 +129,7 @@ void printMatrix(uchar matrix[IMHT][BYTEWIDTH]) {
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-void gameOfLife(uchar matrix[3][3]) {
-  //Copies previous matrix
-  uchar mask;
-  uchar oldMatrix[3][3];
-  for (int y = 0; y < 3; y++)  {
-    for (int x = 0; x < 3; x++)  {
-      oldMatrix[y][x] = matrix[y][x];
-    }
-  }
 
-  //Y is always equal to one as we are dealing with the middle byte.
-  int y = 1;
-  for (int x = 8; x < 16; x++) { //go through each pixel (8 -> 15) in middle byte
-    int neighbourCount;
-    //Count neighhbours around the current bit.
-    neighbourCount = countNeighbours(x, y, oldMatrix);
-    //MASK SPECIFIES CORRECT BIT, IE 2^3 SPECIFIES 3rd bit 0000 0100
-    mask = (uchar) pow(2, x - 8);
-    if ((oldMatrix[y][1] & mask) == mask) { // if alive
-      if (neighbourCount != 2 && neighbourCount != 3) matrix[y][1] = matrix[y][1] ^ mask;
-    } else { // if dead
-      if (neighbourCount == 3) matrix[y][1] = matrix[y][1] | mask;
-    }
-  }
-}
-*/
 
 void gameOfLife(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
   uchar mask;
@@ -235,29 +176,7 @@ void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Worker runs on a seperate channel, listens for 3 by 3 byte matrixes.
-// Performs the game of life function on them.
-// Sends the changed byte(1, 1) back to distributer.
-//
-/////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-void worker(chanend toDistributer, int i) {
-  printf("WORKER %d STARTED\n", i);
-  while (2 == 2) {
-    uchar list[3][3];
-    for (int x = 0; x < 3; x++) {
-      for (int y = 0; y < 3; y++) {
-        toDistributer :> list[y][x];
-      }
-    }
-    gameOfLife(list);
-    toDistributer <: list[1][1];
-  }
-}
-*/
 
 void worker(chanend toDistributer, int i) {
   printf("WORKER %d STARTED\n", i);
@@ -304,15 +223,6 @@ void outputImage(chanend output, uchar bits[IMHT][BYTEWIDTH]) {
   }
 }
 
-/*
-void sendBytes(chanend worker, int x, int y, uchar bits[IMHT][BYTEWIDTH]) {
-  for (int i = BYTEWIDTH - 1; i < BYTEWIDTH + 2; i++) {
-    for (int j = IMHT - 1; j < IMHT + 2; j++) {
-      worker <: bits[(y+j) % IMHT][(x+i) % BYTEWIDTH];
-    }
-  })
-}
-*/
 
 void sendBytes(chanend worker, int strip, uchar bits[IMHT][BYTEWIDTH]) {
   for (int x = 0; x < BYTEWIDTH; x++) {
@@ -540,11 +450,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             //printf("recieved tilt value %d\n", tilted);
             if (tilted == 1) {
               printf("Paused...\n");
-//              tmr :> timeElapsed;
+              tmr :> timeElapsed;
               toLEDs <: 8;
               printf("Rounds processed so far: %d\n", iteration);
               printf("Current live cells: %d\n", calculateLiveCells(initialBits));
-//              printf("Time elapsed so far: %u\n", timeElapsed - time);
+              printf("Time elapsed so far: %u\n", timeElapsed - time);
               fromAcc :> tilted;
               printf("Resuming...\n");
               toLEDs <: pattern;
