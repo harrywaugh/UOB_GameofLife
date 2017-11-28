@@ -1,0 +1,53 @@
+\documentclass{article}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{multicol} % Enable multiple columns.
+\usepackage[margin=2cm]{geometry} % Set the margins to 2 cm.
+
+% Begin the document.
+\begin{document}
+
+% Create the title and remove the 2 cm of whitespace above it.
+\title{\vspace{-2.0cm}Concurrent Report}
+
+% Create the authors.
+\author{Ainsley Rutterford \\ Harry Waugh}
+
+% Create the date.
+\date{28/11/17}
+
+% Draw the title, authors, and date.
+\maketitle
+
+% Make sure that everything from this point onwards is two columns.
+\begin{multicols}{2}
+
+% Create a new section.
+\section{Introduction}
+Hello World! This is a test! I want to see if this text will wrap at all. If it does this is good news.
+
+% Create a new section.
+\section{How to create a bulleted list}
+This is the Second Section. Let's also see if this text wraps. Will this be below or beside Introduction? Here is how to create a list:
+
+% Create a list.
+\begin{itemize}
+\item First bullet point
+\item This is the second bullet point.
+\item And so on...
+\end{itemize}
+
+Then we can carry on the section. But we must be careful because the beginning of this line will be indented as it is after a list.
+
+% End the column and start a new one.
+\columnbreak
+
+% Create a new section.
+\section{New Section}
+This is a new Section. This one should wrap too. This is the third section.
+
+% End the two column formatting.
+\end{multicols}
+
+% End the document.
+\end{document}
