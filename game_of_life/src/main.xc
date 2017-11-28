@@ -381,13 +381,13 @@ void DataInStream(chanend c_out) {
   uchar bits[IMHT][BYTEWIDTH];
 
   //Initialise arrays.
-  //initialiseBitsArray(bits);
+  initialiseBitsArray(bits);
 
   bytesToBits(matrix, bits);
 
   for (int i = 0; i < IMHT; i++)  {
     for (int j = 0; j < BYTEWIDTH; j++)  {
-      c_out <: matrix[j][i];
+      c_out <: bits[i][j];
     }
   }
 
@@ -506,8 +506,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   fromButton :> int value;
 
   printf("Processing...\n");
-  uchar bytes[IMHT][IMWD], initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
+  uchar initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
 
+  initialiseBitsArray(initialBits);
 
   toLEDs <: 4;
   inputImage(c_in, initialBits);
@@ -515,7 +516,6 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
 
   initialiseBitsArray(finishedBits);
-
 
 
   int iteration = 0;
@@ -566,7 +566,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         }
       }
     }
-    if (exportCurrent == 13) {
+    if (exportCurrent == 13 || iteration == 0) {
       toLEDs <: 2;
       outputImage(c_out, finishedBits);
       toLEDs <: pattern;
