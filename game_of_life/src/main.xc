@@ -9,11 +9,13 @@
 #include "i2c.h"
 #include <math.h>
 
+
 #define IMHT 128                  //Image height in bits
 #define IMWD 128                   //Image width in bits
 #define BYTEWIDTH 16              //Image width in bytes
 #define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
+#define GENIMG 0
 
 
 typedef unsigned char uchar;      //Using uchar as shorthand
@@ -75,7 +77,13 @@ void buttonListener( in port b, chanend toDistributer) {
   }
 }
 
-
+void generateStartImage(uchar bits[IMHT][BYTEWIDTH])  {
+  for (int i = 0; i < BYTEWIDTH; i++)  {
+    for (int j = 0; j < IMHT; j++)  {
+      bits[j][i] = (rand() % 256);
+    }
+  }
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -265,30 +273,34 @@ void DataInStream(chanend c_out) {
   uchar line[IMWD];
   printf("DataInStream: Start...\n");
 
-
-  //Open PGM file
-  res = _openinpgm(IMWD, IMHT);
-  if (res) {
-    printf("DataInStream: Error opening file\n");
-    return;
-  }
-  //uchar matrix[IMHT][IMWD];
   uchar bits[IMHT][BYTEWIDTH];
   //Initialise arrays.
-    initialiseBitsArray(bits);
+  initialiseBitsArray(bits);
 
-  //Read image line-by-line and send byte by byte to channel c_out
-  for (int y = 0; y < IMHT; y++) {
-    _readinline(line, IMWD);
-    for (int x = 0; x < IMWD; x++) {
-      //matrix[y][x] = line[x];
-      if (line[x] == 255) {
-        //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
-        bits[y][x / 8] = bits[y][x / 8] | (1 << (x % 8));
+  if (GENIMG) {
+    generateStartImage(bits);
+  } else {
+    //Open PGM file
+    res = _openinpgm(IMWD, IMHT);
+    if (res) {
+      printf("DataInStream: Error opening file\n");
+      return;
+    }
+
+    //Read image line-by-line and send byte by byte to channel c_out
+    for (int y = 0; y < IMHT; y++) {
+      _readinline(line, IMWD);
+      for (int x = 0; x < IMWD; x++) {
+        //matrix[y][x] = line[x];
+        if (line[x] == 255) {
+          //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
+          bits[y][x / 8] = bits[y][x / 8] | (1 << (x % 8));
+        }
       }
     }
+    //Close PGM image file
+    _closeinpgm();
   }
-
 
   for (int i = 0; i < IMHT; i++)  {
     for (int j = 0; j < BYTEWIDTH; j++)  {
@@ -296,112 +308,16 @@ void DataInStream(chanend c_out) {
     }
   }
 
-  //Close PGM image file
-  _closeinpgm();
   printf("DataInStream: Done...\n");
   return;
 }
 
-/*
-void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButton, chanend toLEDs, chanend toWorkers[WORKERS]) {
-  //Starting up and wait for tilting of the xCore-200 Explorer
-  printf("ProcessImage: Start, size = %dx%d\n", IMHT, IMWD);
-  printf("Waiting for SW1 Button Press...\n");
-
-  fromButton :> int value;
-
-  printf("Processing...\n");
-  uchar bytes[IMHT][IMWD], initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
-
-  toLEDs <: 4;
-  inputImage(c_in, bytes);
-  toLEDs <: 0;
-
-  //Initialise arrays.
-  initialiseBitsArray(initialBits);
-  initialiseBitsArray(finishedBits);
-
-  //Convert matrix to new matrix where pixels are represented by bits, not bytes.
-  bytesToBits(bytes, initialBits);
-
-  int iteration = 0;
-  int pattern = 1;
-  timer tmr;
-  uint32_t timeElapsed;
-  uint32_t time;
-  tmr :> time;
-
-  //Loop until the universe implodes
-  while (2 == 2) {
-
-    int count = 0, exportCurrent = 0, counts[WORKERS];
-
-    //Send initial N bytes to each worker.
-    for (int w = 0; w < WORKERS; w++) {
-      x = getXfromCount(count);
-      y = getYfromCount(count);
-      sendBytes(toWorkers[w], x, y, initialBits);
-      counts[w] = count++;
-    }
-    //While all the bytes haven't been sent, keep sending bytes to workers.
-    while (count < IMHT * BYTEWIDTH + WORKERS) {
-      for (int w = 0; w < WORKERS && count < IMHT * BYTEWIDTH + WORKERS; w++) {
-        x = getXfromCount(count);
-        y = getYfromCount(count);
-        select {
-          case fromButton :> exportCurrent:
-            printf("Export button pressed.\n");
-            w--;
-            break;
-          case fromAcc :> int tilted:
-            //printf("recieved tilt value %d\n", tilted);
-            if (tilted == 1) {
-              printf("Paused...\n");
-              tmr :> timeElapsed;
-              toLEDs <: 8;
-              printf("Rounds processed so far: %d\n", iteration);
-              printf("Current live cells: %d\n", calculateLiveCells(initialBits));
-              printf("Time elapsed so far: %u\n", timeElapsed - time);
-              fromAcc :> tilted;
-              printf("Resuming...\n");
-              toLEDs <: pattern;
-            }
-            break;
-          case toWorkers[w] :> finishedBits[getYfromCount(counts[w])][getXfromCount(counts[w])]:
-            if(count < IMHT * BYTEWIDTH)  {
-              sendBytes(toWorkers[w], x, y, initialBits);
-            }
-            counts[w] = count++;
-            break;
-
-        }
-      }
-    }
-
-    if (exportCurrent == 13) {
-      toLEDs <: 2;
-      outputImage(c_out, finishedBits);
-      toLEDs <: pattern;
-    }
-
-    // cant seem to make this a function
-    for (int y = 0; y < IMHT; y++)  {
-      for (int x = 0; x < BYTEWIDTH; x++)  {
-        initialBits[y][x] = finishedBits[y][x];
-      }
-    };
-
-
-    if (iteration % 2 == 0) pattern = 1;
-    else pattern = 0;
-
-    toLEDs <: pattern;
-    iteration++;
-
-    printf("One processing round completed...\n");
+int checkOverflow(int time1, int time2)  {
+  if(time1 < time2)  {
+    return 1;
   }
+  return 0;
 }
-*/
 
 void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButton, chanend toLEDs, chanend toWorkers[WORKERS]) {
   //Starting up and wait for tilting of the xCore-200 Explorer
@@ -428,16 +344,29 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   int stripsComplete = 0;
 
   int pattern = 1;
+  int timeOverflows = 0;
   timer tmr;
   uint32_t timeElapsed;
   uint32_t time;
   tmr :> time;
+  int currentTime = 0;
+  int previousTime = -1;
+  uint32_t totalPausedTime = 0;
+
 
   while (2 == 2)  {
     stripsComplete = 0;
     exportCurrent = 0;
+
     for (int w = 0;  w < WORKERS; w++)  {
       sendBytes(toWorkers[w], w*(IMHT/WORKERS), initialBits);
+      tmr :> timeElapsed;
+      previousTime = currentTime;
+      currentTime = timeElapsed - time;
+      if(checkOverflow(currentTime, previousTime))  {
+        timeOverflows++;
+        previousTime = currentTime;
+      }
     }
     while (stripsComplete < WORKERS)  {
       for(int w = 0; w < WORKERS; w++)  {
@@ -451,11 +380,23 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             if (tilted == 1) {
               printf("Paused...\n");
               tmr :> timeElapsed;
+              uint32_t timePaused = timeElapsed;
               toLEDs <: 8;
-              printf("Rounds processed so far: %d\n", iteration);
+              printf("Rounds processed so far: %d\n", iteration-1);
               printf("Current live cells: %d\n", calculateLiveCells(initialBits));
-              printf("Time elapsed so far: %u\n", timeElapsed - time);
+
+              previousTime = currentTime;
+              currentTime = timePaused - time;
+              if(checkOverflow(currentTime, previousTime)) {
+                timeOverflows++;
+                previousTime = currentTime;
+              }
+              double seconds = round(timeOverflows*(4294967295/100000) + currentTime/100000 - totalPausedTime/100000)/1000 ;
+              printf("Time elapsed so far: %.2f\n", seconds);
               fromAcc :> tilted;
+              tmr :> timeElapsed;
+              totalPausedTime += timeElapsed - timePaused;
+
               printf("Resuming...\n");
               toLEDs <: pattern;
             }
@@ -469,13 +410,29 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             }
             stripsComplete++;
             break;
+          default:
+            tmr :> timeElapsed;
+            previousTime = currentTime;
+            currentTime = timeElapsed - time;
+            if(checkOverflow(currentTime, previousTime))  timeOverflows++;
+            break;
         }
       }
     }
-    if (exportCurrent == 13 ) {
+    if (exportCurrent == 13 || iteration == 0) {
+      tmr :> timeElapsed;
+      uint32_t timePaused = timeElapsed;
+      previousTime = currentTime;
+      currentTime = timePaused - time;
+      if(checkOverflow(currentTime, previousTime)) {
+        timeOverflows++;
+        previousTime = currentTime;
+      }
       toLEDs <: 2;
       outputImage(c_out, finishedBits);
       toLEDs <: pattern;
+      tmr :> timeElapsed;
+      totalPausedTime += timeElapsed - timePaused;
     }
 
     // cant seem to make this a function
@@ -490,9 +447,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
     else pattern = 0;
 
     toLEDs <: pattern;
-
-    printf("Processing round completed...%d\n", iteration++);
-    printf("Live Cells %d\n", calculateLiveCells(initialBits));
+    iteration++;
+    //printf("Processing round completed...%d\n", iteration);
   }
 }
 

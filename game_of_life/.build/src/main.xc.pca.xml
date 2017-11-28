@@ -18,6 +18,7 @@
 <fDef name="calculateLiveCells" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="cbrtl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="ceill" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
+<fDef name="checkOverflow" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
 <fDef name="copysignl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="coshl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="cosl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
@@ -40,6 +41,7 @@
 <fDef name="fmodl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="frexpl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="gameOfLife" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
+<fDef name="generateStartImage" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="getXfromCount" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="getYfromCount" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="get_read_data" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="2"/>
@@ -1077,6 +1079,8 @@
     </values>
   </arg>
 </fCall>
+<fCall name="rand" global="true" numArgs="0">
+</fCall>
 <fCall name="printf" global="true" numArgs="2">
   <arg num="0">
     <values>
@@ -1170,6 +1174,20 @@
     </values>
   </arg>
 </fCall>
+<fCall name="initialiseBitsArray" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="generateStartImage" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
 <fCall name="_openinpgm" global="true" numArgs="2">
   <arg num="0">
     <values>
@@ -1183,13 +1201,6 @@
   </arg>
 </fCall>
 <fCall name="printf" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="initialiseBitsArray" global="true" numArgs="1">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1291,6 +1302,18 @@
     </values>
   </arg>
 </fCall>
+<fCall name="checkOverflow" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
 <fCall name="printf" global="true" numArgs="1">
   <arg num="0">
     <values>
@@ -1336,6 +1359,25 @@
     </values>
   </arg>
 </fCall>
+<fCall name="checkOverflow" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="round" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
 <fCall name="printf" global="true" numArgs="2">
   <arg num="0">
     <values>
@@ -1350,6 +1392,30 @@
 </fCall>
 <fCall name="printf" global="true" numArgs="1">
   <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="checkOverflow" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="checkOverflow" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
     <values>
       <value type="unknown"/>
     </values>
@@ -1362,37 +1428,6 @@
     </values>
   </arg>
   <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="calculateLiveCells" global="true" numArgs="1">
-  <arg num="0">
     <values>
       <value type="unknown"/>
     </values>
