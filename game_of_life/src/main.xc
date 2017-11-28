@@ -9,9 +9,9 @@
 #include "i2c.h"
 #include <math.h>
 
-#define IMHT 512                  //Image height in bits
-#define IMWD 512                  //Image width in bits
-#define BYTEWIDTH 64              //Image width in bytes
+#define IMHT 256                  //Image height in bits
+#define IMWD 256                  //Image width in bits
+#define BYTEWIDTH 32              //Image width in bytes
 #define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 
@@ -296,16 +296,10 @@ void initialiseBitsArray(uchar bits[IMHT][BYTEWIDTH]) {
 }
 
 void outputImage(chanend output, uchar bits[IMHT][BYTEWIDTH]) {
-  uchar mask;
   output <: 1;
   for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < IMWD; x++) {
-      mask = (uchar) pow(2, x % 8);
-      if ((bits[y][x/8] & mask) == mask) {
-        output <: (uchar) 0xff;
-      } else {
-        output <: (uchar) 0x00;
-      }
+    for (int x = 0; x < BYTEWIDTH; x++) {
+      output <: bits[y][x];
     }
   }
 }
@@ -386,8 +380,6 @@ void DataInStream(chanend c_out) {
       }
     }
   }
-
-
 
 
   for (int i = 0; i < IMHT; i++)  {
@@ -571,7 +563,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         }
       }
     }
-    if (exportCurrent == 13 ) {
+    if (exportCurrent == 13 || iteration == 0) {
       toLEDs <: 2;
       outputImage(c_out, finishedBits);
       toLEDs <: pattern;
@@ -613,11 +605,19 @@ void DataOutStream(chanend c_in) {
       printf("DataOutStream: Error opening file\n");
       return;
     }
-
+    uchar compressedByte = 0;
     //Compile each line of the image and write the image line-by-line
     for (int y = 0; y < IMHT; y++) {
-      for (int x = 0; x < IMWD; x++) {
-        c_in :> line[x];
+      for (int x = 0; x < BYTEWIDTH; x++) {
+
+        c_in :> compressedByte;
+        for(int i = 0; i < 8; i++)  {
+          if((compressedByte >> i) & 1)  {
+            line[x*8 + i] = 255;
+          } else {
+            line[x*8 + i] = 0;
+          }
+        }
       }
       _writeoutline(line, IMWD);
       if (!(y % 5))
