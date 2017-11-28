@@ -4,14 +4,15 @@
 #include <platform.h>
 #include <xs1.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "pgmIO.h"
 #include "i2c.h"
 #include <math.h>
 
-#define IMHT 256                  //Image height in bits
-#define IMWD 256                  //Image width in bits
-#define BYTEWIDTH 32              //Image width in bytes
-#define WORKERS 4                 //Number of workers(MUST BE 11 OR LESS)
+#define IMHT 512                  //Image height in bits
+#define IMWD 512                  //Image width in bits
+#define BYTEWIDTH 64              //Image width in bytes
+#define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 
 
@@ -369,21 +370,25 @@ void DataInStream(chanend c_out) {
     printf("DataInStream: Error opening file\n");
     return;
   }
-  uchar matrix[IMHT][IMWD];
+  //uchar matrix[IMHT][IMWD];
+  uchar bits[IMHT][BYTEWIDTH];
+  //Initialise arrays.
+    initialiseBitsArray(bits);
+
   //Read image line-by-line and send byte by byte to channel c_out
   for (int y = 0; y < IMHT; y++) {
     _readinline(line, IMWD);
     for (int x = 0; x < IMWD; x++) {
-      matrix[y][x] = line[x];
+      //matrix[y][x] = line[x];
+      if (line[x] == 255) {
+        //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
+        bits[y][x / 8] = bits[y][x / 8] | (1 << (x % 8));
+      }
     }
   }
 
-  uchar bits[IMHT][BYTEWIDTH];
 
-  //Initialise arrays.
-  initialiseBitsArray(bits);
 
-  bytesToBits(matrix, bits);
 
   for (int i = 0; i < IMHT; i++)  {
     for (int j = 0; j < BYTEWIDTH; j++)  {
@@ -566,7 +571,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         }
       }
     }
-    if (exportCurrent == 13 || iteration == 0) {
+    if (exportCurrent == 13 ) {
       toLEDs <: 2;
       outputImage(c_out, finishedBits);
       toLEDs <: pattern;
@@ -615,7 +620,8 @@ void DataOutStream(chanend c_in) {
         c_in :> line[x];
       }
       _writeoutline(line, IMWD);
-      printf("DataOutStream: Line %d written\n ", y);
+      if (!(y % 5))
+          printf("DataOutStream: Line %d written\n ", y);
     }
 
     //Close the PGM image

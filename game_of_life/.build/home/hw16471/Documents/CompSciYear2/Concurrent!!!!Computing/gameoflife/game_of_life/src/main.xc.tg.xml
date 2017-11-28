@@ -485,6 +485,42 @@
   <core>12</core>
   <inPar/>
 </task>
+<task>
+  <name>_task_worker_12</name>
+  <inFunction>main</inFunction>
+  <parent>_task_7</parent>
+  <calledFunction>worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>13</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_worker_13</name>
+  <inFunction>main</inFunction>
+  <parent>_task_7</parent>
+  <calledFunction>worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>14</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_worker_14</name>
+  <inFunction>main</inFunction>
+  <parent>_task_7</parent>
+  <calledFunction>worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>15</core>
+  <inPar/>
+</task>
+<task>
+  <name>_task_worker_15</name>
+  <inFunction>main</inFunction>
+  <parent>_task_7</parent>
+  <calledFunction>worker</calledFunction>
+  <tile>tile[1]</tile>
+  <core>16</core>
+  <inPar/>
+</task>
 <connection>
   <ends>
     <end task="_task_i2c_master_0" type="server"/>
@@ -559,6 +595,38 @@
     <end task="_task_worker_11" type="chan"/>
   </ends>
     <index>3</index>
+  <name>workers</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_4" type="chan"/>
+    <end task="_task_worker_12" type="chan"/>
+  </ends>
+    <index>4</index>
+  <name>workers</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_4" type="chan"/>
+    <end task="_task_worker_13" type="chan"/>
+  </ends>
+    <index>5</index>
+  <name>workers</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_4" type="chan"/>
+    <end task="_task_worker_14" type="chan"/>
+  </ends>
+    <index>6</index>
+  <name>workers</name>
+</connection>
+<connection>
+  <ends>
+    <end task="_task_distributor_4" type="chan"/>
+    <end task="_task_worker_15" type="chan"/>
+  </ends>
+    <index>7</index>
   <name>workers</name>
 </connection>
 </taskgraph>
