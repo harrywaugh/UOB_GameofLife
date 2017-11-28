@@ -22,11 +22,26 @@
 
 % Create a new section.
 \section{Functionality and Design}
-Our system currently uses up to 8 workers to evolve the Game-of-Life repeatedly. Our system is deadlock-free, implements the correct button, board orientation, and LED behaviour, and can process images above 512x512 pixels using memory on both tiles.
+Our system currently uses up to 8 workers to evolve the Game-of-Life repeatedly. Our system is 
+deadlock-free, implements the correct button, board orientation, and LED behaviour, and can process 
+images above 512x512 pixels using memory on both tiles.
 
-The biggest problem we encountered was trying to run images bigger than 512x512. Originally we were reading the bits from the .pgm file into a 2 dimensional array of unsigned chars, before 'packing' this array into an array of unsigned chars that represented each pixel by a bit instead of a byte. This packing process allowed us to save space as we only had to store an array which was 1/8th the size of the original array. We used this array to process the Game-of-Life on. Eventually we had to free even more space in order to run larger images. To do this, we changed the dataInStream function, so that it read the pixel values straight into the smaller array, representing each pixel as a single bit. 
+The biggest problem we encountered was trying to run images bigger than 512x512. Originally we were 
+reading the bits from the .pgm file into a 2 dimensional array of unsigned chars, before 'packing' 
+this array into an array of unsigned chars that represented each pixel by a bit instead of a byte. 
+This packing process allowed us to save space as we only had to store an array which was 1/8th the 
+size of the original array. We used this array to process the Game-of-Life on. Eventually we had to 
+free even more space in order to run larger images. To do this, we changed the dataInStream function, 
+so that it read the pixel values straight into the smaller array, representing each pixel as a 
+single bit. 
 
-We also encountered problems while implementing a timer. The first problem was that the timer seemed to overflow roughly every 42 seconds. We decided to create a function that would compare two times given, and would return whether or not the timer has overflowed. We would call this function when the board was tilted, and if the function returned true, we would increment a counter which counted how many times the timer has overflowed. The time displayed would be the timers current value added to the overflow value multiplied by the counter value. Using this method, out clock no longer overflowed.
+We also encountered problems while implementing a timer. The first problem was that the timer seemed 
+to overflow roughly every 42 seconds. We decided to create a function that would compare two times 
+given, and would return whether or not the timer has overflowed. We would call this function when 
+the board was tilted, and if the function returned true, we would increment a counter which counted 
+how many times the timer has overflowed. The time displayed would be the timers current value added 
+to the overflow value multiplied by the counter value. Using this method, out clock no longer 
+overflowed.
 
 % Create a new section.
 \section{How to create a bulleted list}
