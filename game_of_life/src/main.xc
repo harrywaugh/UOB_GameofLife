@@ -9,9 +9,9 @@
 #include "i2c.h"
 #include <math.h>
 
-#define IMHT 256                  //Image height in bits
-#define IMWD 256                  //Image width in bits
-#define BYTEWIDTH 32              //Image width in bytes
+#define IMHT 128                  //Image height in bits
+#define IMWD 128                   //Image width in bits
+#define BYTEWIDTH 16              //Image width in bytes
 #define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 
@@ -328,11 +328,9 @@ int getYfromCount(int count) { return count / BYTEWIDTH; }
 
 int calculateLiveCells(uchar bits[IMHT][BYTEWIDTH]) {
   int live = 0;
-  uchar mask;
   for (int y = 0; y < IMHT; y++) {
     for (int x = 0; x < IMWD; x++) {
-      mask = (uchar) pow(2, (x % 8));
-      if ((bits[y][x/8] & mask) == mask) { // if alive
+      if ((bits[y][x/8] >> (x%8)) & 1) { // if alive
         live++;
       }
     }
@@ -538,20 +536,21 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             printf("Export button pressed.\n");
             w--;
             break;
-//          case fromAcc :> int tilted:
-//            //printf("recieved tilt value %d\n", tilted);
-//            if (tilted == 1) {
-//              printf("Paused...\n");
+          case fromAcc :> int tilted:
+            //printf("recieved tilt value %d\n", tilted);
+            if (tilted == 1) {
+              printf("Paused...\n");
 //              tmr :> timeElapsed;
-//              toLEDs <: 8;
-//              printf("Rounds processed so far: %d\n", iteration);
-//              printf("Current live cells: %d\n", calculateLiveCells(initialBits));
+              toLEDs <: 8;
+              printf("Rounds processed so far: %d\n", iteration);
+              printf("Current live cells: %d\n", calculateLiveCells(initialBits));
 //              printf("Time elapsed so far: %u\n", timeElapsed - time);
-//              fromAcc :> tilted;
-//              printf("Resuming...\n");
-//              toLEDs <: pattern;
-//            }
-//            break;
+              fromAcc :> tilted;
+              printf("Resuming...\n");
+              toLEDs <: pattern;
+            }
+            w--;
+            break;
           case toWorkers[w] :> int received:
             for (int x = 0; x < BYTEWIDTH; x++) {
               for (int y = w*(IMHT/WORKERS); y < (w+1)*(IMHT/WORKERS); y++) {
@@ -563,7 +562,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         }
       }
     }
-    if (exportCurrent == 13 || iteration == 0) {
+    if (exportCurrent == 13 ) {
       toLEDs <: 2;
       outputImage(c_out, finishedBits);
       toLEDs <: pattern;
@@ -581,9 +580,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
     else pattern = 0;
 
     toLEDs <: pattern;
-    iteration++;
 
-    printf("One processing round completed...\n");
+    printf("Processing round completed...%d\n", iteration++);
+    printf("Live Cells %d\n", calculateLiveCells(initialBits));
   }
 }
 

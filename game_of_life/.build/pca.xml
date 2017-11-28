@@ -472,6 +472,7 @@
 <fInfo name="calculateLiveCells" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="1">
   <arg num="0" specialize="false">
     <values>
+      <value type="unknown"/>
     </values>
   </arg>
 </fInfo>
