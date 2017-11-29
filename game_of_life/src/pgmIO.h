@@ -12,7 +12,7 @@ int _openinpgm(int width, int height);
 int _readinline(unsigned char line[], int width);
 int _closeinpgm();
 
-int _openoutpgm(int width, int height);
+int _openoutpgm(int width, int height, char outfname[12]);
 int _writeoutline(unsigned char line[], int width);
 int _closeoutpgm();
 

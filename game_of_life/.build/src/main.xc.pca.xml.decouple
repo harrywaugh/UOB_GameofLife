@@ -1168,12 +1168,12 @@
 <fCall name="_openinpgm" global="true" numArgs="2">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1192,7 +1192,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1213,12 +1213,12 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
   <arg num="2">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1246,6 +1246,30 @@
 <fCall name="inputImage" global="true" numArgs="2">
   <arg num="0">
     <passThroughArg param="0" caller="distributor" global="true"/>
+    <values>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="checkOverflow" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="outputImage" global="true" numArgs="2">
+  <arg num="0">
+    <passThroughArg param="1" caller="distributor" global="true"/>
     <values>
     </values>
   </arg>
@@ -1403,6 +1427,18 @@
     </values>
   </arg>
 </fCall>
+<fCall name="printf" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
 <fCall name="printf" global="true" numArgs="1">
   <arg num="0">
     <values>
@@ -1410,15 +1446,20 @@
     </values>
   </arg>
 </fCall>
-<fCall name="_openoutpgm" global="true" numArgs="2">
+<fCall name="_openoutpgm" global="true" numArgs="3">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
+    </values>
+  </arg>
+  <arg num="2">
+    <values>
+      <value type="unknown"/>
     </values>
   </arg>
 </fCall>
@@ -1437,7 +1478,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1708,6 +1749,54 @@
   <arg num="1">
     <values>
       <value type="intval"><intval isSigned="true" val="3"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="4"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="5"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="6"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="7"/></value>
     </values>
   </arg>
 </fCall>

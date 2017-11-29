@@ -10,10 +10,10 @@
 #include <math.h>
 
 
-#define IMHT 1264                  //Image height in bits
-#define IMWD 1264                   //Image width in bits
-#define BYTEWIDTH 158              //Image width in bytes
-#define WORKERS 4                 //Number of workers(MUST BE 11 OR LESS)
+#define IMHT 1024                  //Image height in bits
+#define IMWD 1024                   //Image width in bits
+#define BYTEWIDTH 128              //Image width in bytes
+#define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 #define GENIMG 1
 
@@ -357,6 +357,20 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   uint32_t totalPausedTime = 0;
 
 
+  tmr :> timeElapsed;
+  uint32_t timePaused = timeElapsed;
+  previousTime = currentTime;
+  currentTime = timePaused - time;
+  if(checkOverflow(currentTime, previousTime)) {
+    timeOverflows++;
+    previousTime = currentTime;
+  }
+  toLEDs <: 2;
+  outputImage(c_out, initialBits);
+  toLEDs <: pattern;
+  tmr :> timeElapsed;
+  totalPausedTime += timeElapsed - timePaused;
+
   while (2 == 2)  {
     stripsComplete = 0;
     exportCurrent = 0;
@@ -422,7 +436,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         }
       }
     }
-    if (exportCurrent == 13 || iteration == 0) {
+    if (exportCurrent == 13 || iteration == 0 || iteration == 1 || iteration == 99) {
       tmr :> timeElapsed;
       uint32_t timePaused = timeElapsed;
       previousTime = currentTime;
@@ -443,7 +457,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
     else pattern = 0;
 
     toLEDs <: pattern;
-    //printf("Processing round completed...%d\n", iteration);
+    printf("Processing round completed...%d\n", iteration);
     iteration++;
   }
 }
@@ -454,14 +468,18 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 //
 /////////////////////////////////////////////////////////////////////////////////////////
 void DataOutStream(chanend c_in) {
+  int i = 0;
   while (1) {
     c_in :> int value;
+    i++;
     int res;
     uchar line[IMWD];
 
     //Open PGM file
     printf("DataOutStream: Start...\n");
-    res = _openoutpgm(IMWD, IMHT);
+    char *fname = "testout0.pgm";
+    fname[7] = i++;
+    res = _openoutpgm(IMWD, IMHT, fname);
     if (res) {
       printf("DataOutStream: Error opening file\n");
       return;
