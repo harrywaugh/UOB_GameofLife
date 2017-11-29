@@ -10,9 +10,9 @@
 #include <math.h>
 
 
-#define IMHT 1024                  //Image height in bits
-#define IMWD 1024                   //Image width in bits
-#define BYTEWIDTH 128              //Image width in bytes
+#define IMHT 256                  //Image height in bits
+#define IMWD 256                  //Image width in bits
+#define BYTEWIDTH 32              //Image width in bytes
 #define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 #define GENIMG 1
@@ -357,19 +357,6 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   uint32_t totalPausedTime = 0;
 
 
-  tmr :> timeElapsed;
-  uint32_t timePaused = timeElapsed;
-  previousTime = currentTime;
-  currentTime = timePaused - time;
-  if(checkOverflow(currentTime, previousTime)) {
-    timeOverflows++;
-    previousTime = currentTime;
-  }
-  toLEDs <: 2;
-  outputImage(c_out, initialBits);
-  toLEDs <: pattern;
-  tmr :> timeElapsed;
-  totalPausedTime += timeElapsed - timePaused;
 
   while (2 == 2)  {
     stripsComplete = 0;
@@ -436,7 +423,32 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         }
       }
     }
-    if (exportCurrent == 13 || iteration == 0 || iteration == 1 || iteration == 99) {
+    if(iteration == 99)  {
+      printf("Paused...\n");
+                    tmr :> timeElapsed;
+                    uint32_t timePaused = timeElapsed;
+                    toLEDs <: 8;
+                    printf("Rounds processed so far: %d\n", iteration);
+                    printf("Current live cells: %d\n", calculateLiveCells(initialBits));
+
+                    previousTime = currentTime;
+                    currentTime = timePaused - time;
+                    if(checkOverflow(currentTime, previousTime)) {
+                      timeOverflows++;
+                      previousTime = currentTime;
+                    }
+                    double seconds = round(timeOverflows*(4294967295/100000) + currentTime/100000 - totalPausedTime/100000)/1000 ;
+                    printf("Time elapsed so far: %.2f\n", seconds);
+                    fromAcc :> int tilted;
+                    tmr :> timeElapsed;
+                    totalPausedTime += timeElapsed - timePaused;
+
+                    printf("Resuming...\n");
+                    toLEDs <: pattern;
+      printf("The time for 100 iterations is %d\n", seconds);
+    }
+
+    if (exportCurrent ) {
       tmr :> timeElapsed;
       uint32_t timePaused = timeElapsed;
       previousTime = currentTime;
@@ -457,7 +469,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
     else pattern = 0;
 
     toLEDs <: pattern;
-    printf("Processing round completed...%d\n", iteration);
+    //printf("Processing round completed...%d\n", iteration);
     iteration++;
   }
 }
