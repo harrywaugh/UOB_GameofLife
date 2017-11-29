@@ -10,9 +10,9 @@
 #include <math.h>
 
 
-#define IMHT 1024                  //Image height in bits
-#define IMWD 1024                   //Image width in bits
-#define BYTEWIDTH 128              //Image width in bytes
+#define IMHT 1264                  //Image height in bits
+#define IMWD 1264                   //Image width in bits
+#define BYTEWIDTH 158              //Image width in bytes
 #define WORKERS 4                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 #define GENIMG 1
