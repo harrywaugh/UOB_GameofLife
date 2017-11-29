@@ -385,7 +385,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
               tmr :> timeElapsed;
               uint32_t timePaused = timeElapsed;
               toLEDs <: 8;
-              printf("Rounds processed so far: %d\n", iteration-1);
+              printf("Rounds processed so far: %d\n", iteration);
               printf("Current live cells: %d\n", calculateLiveCells(initialBits));
 
               previousTime = currentTime;
@@ -443,8 +443,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
     else pattern = 0;
 
     toLEDs <: pattern;
-    iteration++;
     //printf("Processing round completed...%d\n", iteration);
+    iteration++;
   }
 }
 
