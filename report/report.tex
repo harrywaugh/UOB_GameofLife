@@ -2,6 +2,7 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{multicol} % Enable multiple columns.
+\usepackage{float}
 \usepackage[margin=2cm]{geometry} % Set the margins to 2 cm.
 
 % Begin the document.
@@ -24,24 +25,124 @@
 \section{Functionality and Design}
 Our system currently uses up to 8 workers to evolve the Game-of-Life repeatedly. Our system is 
 deadlock-free, implements the correct button, board orientation, and LED behaviour, and can process 
-images above 512x512 pixels using memory on both tiles.
+images up to 1264x1264 pixels using memory on both tiles.
+
+\vspace{5mm}
 
 The biggest problem we encountered was trying to run images bigger than 512x512. Originally we were 
 reading the bits from the .pgm file into a 2 dimensional array of unsigned chars, before 'packing' 
 this array into an array of unsigned chars that represented each pixel by a bit instead of a byte. 
 This packing process allowed us to save space as we only had to store an array which was 1/8th the 
-size of the original array. We used this array to process the Game-of-Life on. Eventually we had to 
+size of the original array. We proccessed the Game-of-Life on this array. Eventually we had to 
 free even more space in order to run larger images. To do this, we changed the dataInStream function, 
 so that it read the pixel values straight into the smaller array, representing each pixel as a 
-single bit. 
+single bit. At this point we could process images up to 688x688. We then then realised that in
+\texttt{dataInStream}, we didn't have to store an unsigned char array at all. We simply processed 
+each byte and sent each byte to the distributer as we read from the file. This meant that instead 
+of storing an entire array of unsigned chars of size [ImageHeight][ImageWidth / 8], we stored a single 
+unsigned char.
+
+\vspace{5mm}
 
 We also encountered problems while implementing a timer. The first problem was that the timer seemed 
 to overflow roughly every 42 seconds. We decided to create a function that would compare two times 
-given, and would return whether or not the timer has overflowed. We would call this function when 
+given, and would return whether or not the timer has overflowed. We would then call this function when 
 the board was tilted, and if the function returned true, we would increment a counter which counted 
 how many times the timer has overflowed. The time displayed would be the timers current value added 
-to the overflow value multiplied by the counter value. Using this method, out clock no longer 
+to the overflow value multiplied by the counter value. Using this method, our clock no longer 
 overflowed.
+
+\vspace{5mm}
+
+Early on in the development of our system, our workers functioned differently. Each worker would work
+on a single byte of data. We would send each worker a 3x3 array of unsigned chars, with the middle 
+char being the char that the worker would work on. The worker would then send only the completed
+char back. We realised that this was very inefficient as each worker required 8 extra bytes to work
+on a single byte. Image processing was very slow using this method so we decided to update
+our workers to work on a whole strip of an image at once. This meant that for whole chunk of an image
+to be worked on, only an extra strip of pixels at the top and bottom of the strip had to be sent as
+the sides of the image wrap round to each other. Using this new worker strategy, our image processing
+was up to 11 times faster.
+
+% Create a new section.
+\section{Tests and Experiments}
+For each image provided to us, we will show the initial image along side the image after 1, 2 and 100
+iterations respectively. We will also include randomly generated 1024x1024 and 1264x1264 images. The
+results are shown in Figure...
+
+We carried out experiments comparing the time taken for an image to be processed when using different
+workers. We experimented with using 1, 2, 4, and 8 workers. The results are show in Figure... We found
+that doubling the workers almost halved the processing time, showing that in general there was an
+inverse relationship between the two variables.
+
+\end{multicols}
+
+\newpage
+
+\newgeometry{margin=1cm}
+
+\begin{multicols}{2}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{16x16 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{128x128 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{256x256 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{512x512 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{1024x1024 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{1264x1264 images.}
+\end{figure}
+
+\end{multicols}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{64onenew.png}
+\caption{64x64 images.}
+\end{figure}
 
 % Create a new section.
 \section{How to create a bulleted list}
@@ -57,14 +158,14 @@ This is the Second Section. Let's also see if this text wraps. Will this be belo
 Then we can carry on the section. But we must be careful because the beginning of this line will be indented as it is after a list.
 
 % End the column and start a new one.
-\columnbreak
+%\columnbreak
 
 % Create a new section.
 \section{New Section}
 This is a new Section. This one should wrap too. This is the third section.
 
 % End the two column formatting.
-\end{multicols}
+%\end{multicols}
 
 % End the document.
 \end{document}
