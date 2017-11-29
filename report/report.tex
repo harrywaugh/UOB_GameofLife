@@ -26,6 +26,8 @@ Our system currently uses up to 8 workers to evolve the Game-of-Life repeatedly.
 deadlock-free, implements the correct button, board orientation, and LED behaviour, and can process 
 images up to 1264x1264 pixels using memory on both tiles.
 
+\vspace{5mm}
+
 The biggest problem we encountered was trying to run images bigger than 512x512. Originally we were 
 reading the bits from the .pgm file into a 2 dimensional array of unsigned chars, before 'packing' 
 this array into an array of unsigned chars that represented each pixel by a bit instead of a byte. 
@@ -39,6 +41,8 @@ each byte and sent each byte to the distributer as we read from the file. This m
 of storing an entire array of unsigned chars of size [ImageHeight][ImageWidth / 8], we stored a single 
 unsigned char.
 
+\vspace{5mm}
+
 We also encountered problems while implementing a timer. The first problem was that the timer seemed 
 to overflow roughly every 42 seconds. We decided to create a function that would compare two times 
 given, and would return whether or not the timer has overflowed. We would then call this function when 
@@ -46,6 +50,8 @@ the board was tilted, and if the function returned true, we would increment a co
 how many times the timer has overflowed. The time displayed would be the timers current value added 
 to the overflow value multiplied by the counter value. Using this method, our clock no longer 
 overflowed.
+
+\vspace{5mm}
 
 Early on in the development of our system, our workers functioned differently. Each worker would work
 on a single byte of data. We would send each worker a 3x3 array of unsigned chars, with the middle 
@@ -56,6 +62,8 @@ our workers to work on a whole strip of an image at once. This meant that for wh
 to be worked on, only an extra strip of pixels at the top and bottom of the strip had to be sent as
 the sides of the image wrap round to each other. Using this new worker strategy, our image processing
 was up to 11 times faster.
+
+\vspace{5mm}
 
 % Create a new section.
 \section{How to create a bulleted list}
