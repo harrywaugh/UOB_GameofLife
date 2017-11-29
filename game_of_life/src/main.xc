@@ -10,12 +10,12 @@
 #include <math.h>
 
 
-#define IMHT 1024                  //Image height in bits
-#define IMWD 1024                   //Image width in bits
-#define BYTEWIDTH 128              //Image width in bytes
+#define IMHT 64                  //Image height in bits
+#define IMWD 64                   //Image width in bits
+#define BYTEWIDTH 8              //Image width in bytes
 #define WORKERS 4                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
-#define GENIMG 0
+#define GENIMG 1
 
 
 typedef unsigned char uchar;      //Using uchar as shorthand
@@ -77,13 +77,6 @@ void buttonListener( in port b, chanend toDistributer) {
   }
 }
 
-void generateStartImage(uchar bits[IMHT][BYTEWIDTH])  {
-  for (int i = 0; i < BYTEWIDTH; i++)  {
-    for (int j = 0; j < IMHT; j++)  {
-      bits[j][i] = (rand() % 256);
-    }
-  }
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -278,7 +271,11 @@ void DataInStream(chanend c_out) {
   initialiseBitsArray(bits);
 
   if (GENIMG) {
-    generateStartImage(bits);
+    for (int i = 0; i < BYTEWIDTH; i++)  {
+      for (int j = 0; j < IMHT; j++)  {
+        c_out <: (uchar)(rand() % 256);
+      }
+    }
   } else {
     //Open PGM file
     res = _openinpgm(IMWD, IMHT);
@@ -287,26 +284,24 @@ void DataInStream(chanend c_out) {
       return;
     }
 
+    uchar compressedBits;
     //Read image line-by-line and send byte by byte to channel c_out
     for (int y = 0; y < IMHT; y++) {
       _readinline(line, IMWD);
-      for (int x = 0; x < IMWD; x++) {
-        //matrix[y][x] = line[x];
-        if (line[x] == 255) {
-          //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
-          bits[y][x / 8] = bits[y][x / 8] | (1 << (x % 8));
+      for (int x = 0; x < BYTEWIDTH; x++) {
+        compressedBits = 0;
+        for(int i = 0; i < 8; i++)  {
+          if (line[x*8+i] == 255) {
+            //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
+            compressedBits = compressedBits | (1 << (i % 8));
+          }
         }
+        c_out <: compressedBits;
+
       }
     }
     //Close PGM image file
     _closeinpgm();
-  }
-
-
-  for (int i = 0; i < IMHT; i++)  {
-    for (int j = 0; j < BYTEWIDTH; j++)  {
-      c_out <: bits[i][j];
-    }
   }
 
   printf("DataInStream: Done...\n");
@@ -401,8 +396,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             w--;
             break;
           case toWorkers[w] :> int received:
-            for (int x = 0; x < BYTEWIDTH; x++) {
-              for (int y = w*(IMHT/WORKERS); y < (w+1)*(IMHT/WORKERS); y++) {
+            for (short x = 0; x < BYTEWIDTH; x++) {
+              for (short y = w*(IMHT/WORKERS); y < (w+1)*(IMHT/WORKERS); y++) {
                 toWorkers[w] :> initialBits[y][x];
               }
             }

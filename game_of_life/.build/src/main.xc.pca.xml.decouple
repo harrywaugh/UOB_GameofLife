@@ -41,7 +41,6 @@
 <fDef name="fmodl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="frexpl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="gameOfLife" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
-<fDef name="generateStartImage" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="getXfromCount" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="getYfromCount" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="get_read_data" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="2"/>
@@ -1079,8 +1078,6 @@
     </values>
   </arg>
 </fCall>
-<fCall name="rand" global="true" numArgs="0">
-</fCall>
 <fCall name="printf" global="true" numArgs="2">
   <arg num="0">
     <values>
@@ -1181,22 +1178,17 @@
     </values>
   </arg>
 </fCall>
-<fCall name="generateStartImage" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
+<fCall name="rand" global="true" numArgs="0">
 </fCall>
 <fCall name="_openinpgm" global="true" numArgs="2">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="64"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="64"/></value>
     </values>
   </arg>
 </fCall>
@@ -1215,7 +1207,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="64"/></value>
     </values>
   </arg>
 </fCall>
@@ -1236,12 +1228,12 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="64"/></value>
     </values>
   </arg>
   <arg num="2">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="64"/></value>
     </values>
   </arg>
 </fCall>
@@ -1436,12 +1428,12 @@
 <fCall name="_openoutpgm" global="true" numArgs="2">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="64"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="64"/></value>
     </values>
   </arg>
 </fCall>
@@ -1460,7 +1452,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="64"/></value>
     </values>
   </arg>
 </fCall>
