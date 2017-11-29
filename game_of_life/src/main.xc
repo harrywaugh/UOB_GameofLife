@@ -10,12 +10,12 @@
 #include <math.h>
 
 
-#define IMHT 128                  //Image height in bits
-#define IMWD 128                   //Image width in bits
-#define BYTEWIDTH 16              //Image width in bytes
-#define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
+#define IMHT 1264                  //Image height in bits
+#define IMWD 1264                   //Image width in bits
+#define BYTEWIDTH 158              //Image width in bytes
+#define WORKERS 4                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
-#define GENIMG 0
+#define GENIMG 1
 
 
 typedef unsigned char uchar;      //Using uchar as shorthand
@@ -77,13 +77,6 @@ void buttonListener( in port b, chanend toDistributer) {
   }
 }
 
-void generateStartImage(uchar bits[IMHT][BYTEWIDTH])  {
-  for (int i = 0; i < BYTEWIDTH; i++)  {
-    for (int j = 0; j < IMHT; j++)  {
-      bits[j][i] = (rand() % 256);
-    }
-  }
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 //
@@ -93,16 +86,20 @@ void generateStartImage(uchar bits[IMHT][BYTEWIDTH])  {
 /////////////////////////////////////////////////////////////////////////////////////////
 
 
-int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
-  //int BYTEHEIGHT = IMHT/WORKERS + 2;
+int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH], uchar prevLine[BYTEWIDTH]) {
   int BITWIDTH = IMWD;
   int count = 0;
   uchar mask;
+  for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) {
+    mask = 1 << (j % 8);
+    if ((prevLine[(j % BITWIDTH) / 8] & mask) == mask) {
+      count++;
+    }
+  }
 
-  for (int i = y - 1; i < y + 2; i++) {
+  for (int i = y; i < y + 2; i++) {
     for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) {
       mask = 1 << (j % 8);
-      //if ((matrix[y + i][((x + j) % BITWIDTH) / 8] >> ((x+j)%8))) {}
       if ((matrix[i][(j % BITWIDTH) / 8] & mask) == mask) {
         count++;
       }
@@ -141,23 +138,33 @@ void printMatrix(uchar matrix[IMHT][BYTEWIDTH]) {
 
 void gameOfLife(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
   uchar mask;
-  uchar oldMatrix[IMHT/WORKERS + 2][BYTEWIDTH];
-  for (int y = 0; y < IMHT/WORKERS + 2; y++)  {
-    for (int x = 0; x < BYTEWIDTH; x++)  {
-      oldMatrix[y][x] = matrix[y][x];
-    }
+  uchar previousLine[BYTEWIDTH], currentLine[BYTEWIDTH];
+  //COPY FIRSTLINE
+  for(int i = 0; i < BYTEWIDTH; i++)  {
+    previousLine[i] = matrix[0][i];
+    currentLine[i] = matrix[1][i];
   }
+//  //uchar oldMatrix[IMHT/WORKERS + 2][BYTEWIDTH];
+//  for (int y = 0; y < IMHT/WORKERS + 2; y++)  {
+//    for (int x = 0; x < BYTEWIDTH; x++)  {
+//      oldMatrix[y][x] = matrix[y][x];
+//    }
+//  }
 
   for (int y = 1; y < IMHT/WORKERS + 1; y++) {
     for (int x = 0; x < IMWD; x++) {
-      int neighbourCount = countNeighbours(x, y, oldMatrix);
+      int neighbourCount = countNeighbours(x, y, matrix, previousLine);
       mask = (uchar) pow(2, x % 8);
-      //mask = 1 << (x % 8);
-      if ((oldMatrix[y][x/8] & mask) == mask) { // if alive
-        if (neighbourCount != 2 && neighbourCount != 3) matrix[y][x/8] = matrix[y][x/8] ^ mask;
+      if ((matrix[y][x/8] & mask) == mask) { // if alive
+        if (neighbourCount != 2 && neighbourCount != 3) currentLine[x/8] = currentLine[x/8] ^ mask;
       } else { // if dead
-        if (neighbourCount == 3) matrix[y][x/8] = matrix[y][x/8] | mask;
+        if (neighbourCount == 3) currentLine[x/8] = currentLine[x/8] | mask;
       }
+    }
+    for(int i = 0; i < BYTEWIDTH; i++)  {
+      previousLine[i] = matrix[y][i];
+      matrix[y][i] = currentLine[i];
+      currentLine[i] = matrix[y+1][i];
     }
   }
 
@@ -170,19 +177,19 @@ void gameOfLife(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
 // Now each pxixel in the image is represented by a single bit.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
-
-  //Go through each uchar in the old matrix
-  for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < IMWD; x++) {
-      //If uchar represents an alive pixel
-      if (bytes[y][x] == 255) {
-        //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
-        bits[y][x / 8] = bits[y][x / 8] | (uchar) pow(2, (x % 8));
-      }
-    }
-  }
-}
+//void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
+//
+//  //Go through each uchar in the old matrix
+//  for (int y = 0; y < IMHT; y++) {
+//    for (int x = 0; x < IMWD; x++) {
+//      //If uchar represents an alive pixel
+//      if (bytes[y][x] == 255) {
+//        //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
+//        bits[y][x / 8] = bits[y][x / 8] | (uchar) pow(2, (x % 8));
+//      }
+//    }
+//  }
+//}
 
 
 
@@ -273,12 +280,12 @@ void DataInStream(chanend c_out) {
   uchar line[IMWD];
   printf("DataInStream: Start...\n");
 
-  uchar bits[IMHT][BYTEWIDTH];
-  //Initialise arrays.
-  initialiseBitsArray(bits);
-
   if (GENIMG) {
-    generateStartImage(bits);
+    for (int i = 0; i < BYTEWIDTH; i++)  {
+      for (int j = 0; j < IMHT; j++)  {
+        c_out <: ((uchar)(rand() % 256));
+      }
+    }
   } else {
     //Open PGM file
     res = _openinpgm(IMWD, IMHT);
@@ -287,25 +294,24 @@ void DataInStream(chanend c_out) {
       return;
     }
 
+    uchar compressedBits;
     //Read image line-by-line and send byte by byte to channel c_out
     for (int y = 0; y < IMHT; y++) {
       _readinline(line, IMWD);
-      for (int x = 0; x < IMWD; x++) {
-        //matrix[y][x] = line[x];
-        if (line[x] == 255) {
-          //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
-          bits[y][x / 8] = bits[y][x / 8] | (1 << (x % 8));
+      for (int x = 0; x < BYTEWIDTH; x++) {
+        compressedBits = 0;
+        for(int i = 0; i < 8; i++)  {
+          if (line[x*8+i] == 255) {
+            //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
+            compressedBits = compressedBits | (1 << (i % 8));
+          }
         }
+        c_out <: compressedBits;
+
       }
     }
     //Close PGM image file
     _closeinpgm();
-  }
-
-  for (int i = 0; i < IMHT; i++)  {
-    for (int j = 0; j < BYTEWIDTH; j++)  {
-      c_out <: bits[i][j];
-    }
   }
 
   printf("DataInStream: Done...\n");
@@ -327,16 +333,13 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   fromButton :> int value;
 
   printf("Processing...\n");
-  uchar initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
+  uchar initialBits[IMHT][BYTEWIDTH];
 
   initialiseBitsArray(initialBits);
 
   toLEDs <: 4;
   inputImage(c_in, initialBits);
   toLEDs <: 0;
-
-
-  initialiseBitsArray(finishedBits);
 
 
   int iteration = 0;
@@ -382,7 +385,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
               tmr :> timeElapsed;
               uint32_t timePaused = timeElapsed;
               toLEDs <: 8;
-              printf("Rounds processed so far: %d\n", iteration-1);
+              printf("Rounds processed so far: %d\n", iteration);
               printf("Current live cells: %d\n", calculateLiveCells(initialBits));
 
               previousTime = currentTime;
@@ -403,9 +406,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             w--;
             break;
           case toWorkers[w] :> int received:
-            for (int x = 0; x < BYTEWIDTH; x++) {
-              for (int y = w*(IMHT/WORKERS); y < (w+1)*(IMHT/WORKERS); y++) {
-                toWorkers[w] :> finishedBits[y][x];
+            for (short x = 0; x < BYTEWIDTH; x++) {
+              for (short y = w*(IMHT/WORKERS); y < (w+1)*(IMHT/WORKERS); y++) {
+                toWorkers[w] :> initialBits[y][x];
               }
             }
             stripsComplete++;
@@ -429,26 +432,19 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         previousTime = currentTime;
       }
       toLEDs <: 2;
-      outputImage(c_out, finishedBits);
+      outputImage(c_out, initialBits);
       toLEDs <: pattern;
       tmr :> timeElapsed;
       totalPausedTime += timeElapsed - timePaused;
     }
-
-    // cant seem to make this a function
-    for (int y = 0; y < IMHT; y++)  {
-      for (int x = 0; x < BYTEWIDTH; x++)  {
-        initialBits[y][x] = finishedBits[y][x];
-      }
-    };
 
 
     if (iteration % 2 == 0) pattern = 1;
     else pattern = 0;
 
     toLEDs <: pattern;
-    iteration++;
     //printf("Processing round completed...%d\n", iteration);
+    iteration++;
   }
 }
 
