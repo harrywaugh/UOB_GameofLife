@@ -70,10 +70,19 @@ For each image provided to us, we will show the initial image along side the ima
 iterations respectively. We will also include randomly generated 1024x1024 and 1264x1264 images. The
 results are shown in Figure...
 
+\vspace{5mm}
+
 We carried out experiments comparing the time taken for an image to be processed when using different
-workers. We experimented with using 1, 2, 4, and 8 workers. The results are show in Figure... We found
-that doubling the workers almost halved the processing time, showing that in general there was an
-inverse relationship between the two variables.
+workers. We experimented with using 1, 2, 4, and 8 workers. The results are show in Figure... 
+
+\vspace{5mm}
+
+One limitation of our system is that it can only work on images that have a width that is divisible by
+8. This is due to the fact that we 'pack' 8 pixels into an unsigned char to represent each pixel by
+a single bit. Another limitation of our system is the size of images it can process, due to the limited
+amount of memory provided by the board. In order to process images any larger than 1272x1272, we would
+have to either, attach another board to our own, or remove the functionality of the buttons, LEDs and
+orientation sensors of the board.
 
 \end{multicols}
 
@@ -143,6 +152,9 @@ inverse relationship between the two variables.
 \includegraphics[width=3cm]{64onenew.png}
 \caption{64x64 images.}
 \end{figure}
+
+
+\newgeometry{margin=1cm}
 
 % Create a new section.
 \section{How to create a bulleted list}
