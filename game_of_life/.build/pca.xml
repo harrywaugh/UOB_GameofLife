@@ -459,16 +459,6 @@
     </values>
   </arg>
 </fInfo>
-<fInfo name="bytesToBits" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="2">
-  <arg num="0" specialize="false">
-    <values>
-    </values>
-  </arg>
-  <arg num="1" specialize="false">
-    <values>
-    </values>
-  </arg>
-</fInfo>
 <fInfo name="calculateLiveCells" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="1">
   <arg num="0" specialize="false">
     <values>
@@ -522,7 +512,7 @@
     </values>
   </arg>
 </fInfo>
-<fInfo name="countNeighbours" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="3">
+<fInfo name="countNeighbours" global="true" specialize="false" noreturn="false" doNotSpecialize="false" numParams="4">
   <arg num="0" specialize="false">
     <values>
       <value type="unknown"/>
@@ -534,6 +524,11 @@
     </values>
   </arg>
   <arg num="2" specialize="false">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="3" specialize="false">
     <values>
       <value type="unknown"/>
     </values>

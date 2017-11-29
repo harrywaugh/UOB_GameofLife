@@ -14,7 +14,6 @@
 <fDef name="atanhl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="atanl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="buttonListener" global="true" noreturn="true" doNotSpecialize="false" numParams="2"/>
-<fDef name="bytesToBits" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
 <fDef name="calculateLiveCells" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="cbrtl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="ceill" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
@@ -22,7 +21,7 @@
 <fDef name="copysignl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="coshl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="cosl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
-<fDef name="countNeighbours" global="true" noreturn="false" doNotSpecialize="false" numParams="3"/>
+<fDef name="countNeighbours" global="true" noreturn="false" doNotSpecialize="false" numParams="4"/>
 <fDef name="delay_microseconds" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="delay_milliseconds" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="delay_seconds" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
@@ -1104,7 +1103,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="countNeighbours" global="true" numArgs="3">
+<fCall name="countNeighbours" global="true" numArgs="4">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1120,14 +1119,7 @@
       <value type="unknown"/>
     </values>
   </arg>
-</fCall>
-<fCall name="pow" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="intval"><intval isSigned="true" val="2"/></value>
-    </values>
-  </arg>
-  <arg num="1">
+  <arg num="3">
     <values>
       <value type="unknown"/>
     </values>
@@ -1171,24 +1163,17 @@
     </values>
   </arg>
 </fCall>
-<fCall name="initialiseBitsArray" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
 <fCall name="rand" global="true" numArgs="0">
 </fCall>
 <fCall name="_openinpgm" global="true" numArgs="2">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1207,7 +1192,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1228,12 +1213,12 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
   <arg num="2">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1428,12 +1413,12 @@
 <fCall name="_openoutpgm" global="true" numArgs="2">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>
@@ -1452,7 +1437,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="64"/></value>
+      <value type="intval"><intval isSigned="true" val="1024"/></value>
     </values>
   </arg>
 </fCall>

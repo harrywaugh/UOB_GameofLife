@@ -10,9 +10,9 @@
 #include <math.h>
 
 
-#define IMHT 64                  //Image height in bits
-#define IMWD 64                   //Image width in bits
-#define BYTEWIDTH 8              //Image width in bytes
+#define IMHT 1024                  //Image height in bits
+#define IMWD 1024                   //Image width in bits
+#define BYTEWIDTH 128              //Image width in bytes
 #define WORKERS 4                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 #define GENIMG 1
@@ -86,16 +86,20 @@ void buttonListener( in port b, chanend toDistributer) {
 /////////////////////////////////////////////////////////////////////////////////////////
 
 
-int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
-  //int BYTEHEIGHT = IMHT/WORKERS + 2;
+int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH], uchar prevLine[BYTEWIDTH]) {
   int BITWIDTH = IMWD;
   int count = 0;
   uchar mask;
+  for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) {
+    mask = 1 << (j % 8);
+    if ((prevLine[(j % BITWIDTH) / 8] & mask) == mask) {
+      count++;
+    }
+  }
 
-  for (int i = y - 1; i < y + 2; i++) {
+  for (int i = y; i < y + 2; i++) {
     for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) {
       mask = 1 << (j % 8);
-      //if ((matrix[y + i][((x + j) % BITWIDTH) / 8] >> ((x+j)%8))) {}
       if ((matrix[i][(j % BITWIDTH) / 8] & mask) == mask) {
         count++;
       }
@@ -134,23 +138,33 @@ void printMatrix(uchar matrix[IMHT][BYTEWIDTH]) {
 
 void gameOfLife(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
   uchar mask;
-  uchar oldMatrix[IMHT/WORKERS + 2][BYTEWIDTH];
-  for (int y = 0; y < IMHT/WORKERS + 2; y++)  {
-    for (int x = 0; x < BYTEWIDTH; x++)  {
-      oldMatrix[y][x] = matrix[y][x];
-    }
+  uchar previousLine[BYTEWIDTH], currentLine[BYTEWIDTH];
+  //COPY FIRSTLINE
+  for(int i = 0; i < BYTEWIDTH; i++)  {
+    previousLine[i] = matrix[0][i];
+    currentLine[i] = matrix[1][i];
   }
+//  //uchar oldMatrix[IMHT/WORKERS + 2][BYTEWIDTH];
+//  for (int y = 0; y < IMHT/WORKERS + 2; y++)  {
+//    for (int x = 0; x < BYTEWIDTH; x++)  {
+//      oldMatrix[y][x] = matrix[y][x];
+//    }
+//  }
 
   for (int y = 1; y < IMHT/WORKERS + 1; y++) {
     for (int x = 0; x < IMWD; x++) {
-      int neighbourCount = countNeighbours(x, y, oldMatrix);
+      int neighbourCount = countNeighbours(x, y, matrix, previousLine);
       mask = (uchar) pow(2, x % 8);
-      //mask = 1 << (x % 8);
-      if ((oldMatrix[y][x/8] & mask) == mask) { // if alive
-        if (neighbourCount != 2 && neighbourCount != 3) matrix[y][x/8] = matrix[y][x/8] ^ mask;
+      if ((matrix[y][x/8] & mask) == mask) { // if alive
+        if (neighbourCount != 2 && neighbourCount != 3) currentLine[x/8] = currentLine[x/8] ^ mask;
       } else { // if dead
-        if (neighbourCount == 3) matrix[y][x/8] = matrix[y][x/8] | mask;
+        if (neighbourCount == 3) currentLine[x/8] = currentLine[x/8] | mask;
       }
+    }
+    for(int i = 0; i < BYTEWIDTH; i++)  {
+      previousLine[i] = matrix[y][i];
+      matrix[y][i] = currentLine[i];
+      currentLine[i] = matrix[y+1][i];
     }
   }
 
@@ -163,19 +177,19 @@ void gameOfLife(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
 // Now each pxixel in the image is represented by a single bit.
 //
 /////////////////////////////////////////////////////////////////////////////////////////
-void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
-
-  //Go through each uchar in the old matrix
-  for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < IMWD; x++) {
-      //If uchar represents an alive pixel
-      if (bytes[y][x] == 255) {
-        //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
-        bits[y][x / 8] = bits[y][x / 8] | (uchar) pow(2, (x % 8));
-      }
-    }
-  }
-}
+//void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
+//
+//  //Go through each uchar in the old matrix
+//  for (int y = 0; y < IMHT; y++) {
+//    for (int x = 0; x < IMWD; x++) {
+//      //If uchar represents an alive pixel
+//      if (bytes[y][x] == 255) {
+//        //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
+//        bits[y][x / 8] = bits[y][x / 8] | (uchar) pow(2, (x % 8));
+//      }
+//    }
+//  }
+//}
 
 
 
@@ -266,14 +280,10 @@ void DataInStream(chanend c_out) {
   uchar line[IMWD];
   printf("DataInStream: Start...\n");
 
-  uchar bits[IMHT][BYTEWIDTH];
-  //Initialise arrays.
-  initialiseBitsArray(bits);
-
   if (GENIMG) {
     for (int i = 0; i < BYTEWIDTH; i++)  {
       for (int j = 0; j < IMHT; j++)  {
-        c_out <: (uchar)(rand() % 256);
+        c_out <: ((uchar)(rand() % 256));
       }
     }
   } else {

@@ -1,6 +1,6 @@
 #include "pgmIO.h"
 
-const char infname[] = "64x64.pgm";
+const char infname[] = "128x128.pgm";
 const char outfname[] = "testout.pgm";
 
 FILE *_INFP = NULL;
