@@ -2,6 +2,7 @@
 \usepackage{booktabs}
 \usepackage{graphicx}
 \usepackage{multicol} % Enable multiple columns.
+\usepackage{float}
 \usepackage[margin=2cm]{geometry} % Set the margins to 2 cm.
 
 % Begin the document.
@@ -63,7 +64,85 @@ to be worked on, only an extra strip of pixels at the top and bottom of the stri
 the sides of the image wrap round to each other. Using this new worker strategy, our image processing
 was up to 11 times faster.
 
-\vspace{5mm}
+% Create a new section.
+\section{Tests and Experiments}
+For each image provided to us, we will show the initial image along side the image after 1, 2 and 100
+iterations respectively. We will also include randomly generated 1024x1024 and 1264x1264 images. The
+results are shown in Figure...
+
+We carried out experiments comparing the time taken for an image to be processed when using different
+workers. We experimented with using 1, 2, 4, and 8 workers. The results are show in Figure... We found
+that doubling the workers almost halved the processing time, showing that in general there was an
+inverse relationship between the two variables.
+
+\end{multicols}
+
+\newpage
+
+\newgeometry{margin=1cm}
+
+\begin{multicols}{2}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{16x16 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{128x128 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{256x256 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{512x512 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{1024x1024 images.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{16initial.png}
+\caption{1264x1264 images.}
+\end{figure}
+
+\end{multicols}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{16initial.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{64onenew.png}
+\includegraphics[width=3cm]{64onenew.png}
+\caption{64x64 images.}
+\end{figure}
 
 % Create a new section.
 \section{How to create a bulleted list}
@@ -79,14 +158,14 @@ This is the Second Section. Let's also see if this text wraps. Will this be belo
 Then we can carry on the section. But we must be careful because the beginning of this line will be indented as it is after a list.
 
 % End the column and start a new one.
-\columnbreak
+%\columnbreak
 
 % Create a new section.
 \section{New Section}
 This is a new Section. This one should wrap too. This is the third section.
 
 % End the two column formatting.
-\end{multicols}
+%\end{multicols}
 
 % End the document.
 \end{document}
