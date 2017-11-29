@@ -10,10 +10,10 @@
 #include <math.h>
 
 
-#define IMHT 128                  //Image height in bits
-#define IMWD 128                   //Image width in bits
-#define BYTEWIDTH 16              //Image width in bytes
-#define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
+#define IMHT 1024                  //Image height in bits
+#define IMWD 1024                   //Image width in bits
+#define BYTEWIDTH 128              //Image width in bytes
+#define WORKERS 4                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 #define GENIMG 0
 
@@ -302,6 +302,7 @@ void DataInStream(chanend c_out) {
     _closeinpgm();
   }
 
+
   for (int i = 0; i < IMHT; i++)  {
     for (int j = 0; j < BYTEWIDTH; j++)  {
       c_out <: bits[i][j];
@@ -327,16 +328,13 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   fromButton :> int value;
 
   printf("Processing...\n");
-  uchar initialBits[IMHT][BYTEWIDTH], finishedBits[IMHT][BYTEWIDTH];
+  uchar initialBits[IMHT][BYTEWIDTH];
 
   initialiseBitsArray(initialBits);
 
   toLEDs <: 4;
   inputImage(c_in, initialBits);
   toLEDs <: 0;
-
-
-  initialiseBitsArray(finishedBits);
 
 
   int iteration = 0;
@@ -405,7 +403,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
           case toWorkers[w] :> int received:
             for (int x = 0; x < BYTEWIDTH; x++) {
               for (int y = w*(IMHT/WORKERS); y < (w+1)*(IMHT/WORKERS); y++) {
-                toWorkers[w] :> finishedBits[y][x];
+                toWorkers[w] :> initialBits[y][x];
               }
             }
             stripsComplete++;
@@ -429,18 +427,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         previousTime = currentTime;
       }
       toLEDs <: 2;
-      outputImage(c_out, finishedBits);
+      outputImage(c_out, initialBits);
       toLEDs <: pattern;
       tmr :> timeElapsed;
       totalPausedTime += timeElapsed - timePaused;
     }
-
-    // cant seem to make this a function
-    for (int y = 0; y < IMHT; y++)  {
-      for (int x = 0; x < BYTEWIDTH; x++)  {
-        initialBits[y][x] = finishedBits[y][x];
-      }
-    };
 
 
     if (iteration % 2 == 0) pattern = 1;
