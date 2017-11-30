@@ -105,25 +105,25 @@ int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH], uch
 // the Game-of-Life on the given strip
 void gameOfLife(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
   uchar mask; // a value we will use to mask a byte and check the value of a single bit
-  uchar previousLine[BYTEWIDTH], currentLine[BYTEWIDTH]; // array of uchars that contain the previous line and current line to be processed on
+  uchar previousLine[BYTEWIDTH], currentLine[BYTEWIDTH]; // array of uchars that contain the previous line and current line to be processed
 
   for (int i = 0; i < BYTEWIDTH; i++) { // iterate through every byte in a row
     previousLine[i] = matrix[0][i]; // copy the first line of the matrix into previousLine
     currentLine[i] = matrix[1][i]; // copy the second line of the matrix into currentLine
   }
 
-  for (int y = 1; y < IMHT/WORKERS + 1; y++) { // iterate through every row in the strip provided apart from the first and last
-    for (int x = 0; x < IMWD; x++) { // iterate through every pixel
+  for (int y = 1; y < IMHT/WORKERS + 1; y++) { // iterate through every row in the strip provided apart from the first and last, as these are not updated with this strip
+    for (int x = 0; x < IMWD; x++) { // iterate through every pixel in a row
       int neighbourCount = countNeighbours(x, y, matrix, previousLine); // calculate the number of neighbours that the pixel at the current x and y has
-      mask = (uchar) pow(2, x % 8); // cant this be the new mask style? // masking is explained in the count neighbours function
+      mask = 1 << (x % 8); // masking is explained in the count neighbours function
       if ((matrix[y][x/8] & mask) == mask) { // if the cell at the x and y position is alive
         if (neighbourCount != 2 && neighbourCount != 3) currentLine[x/8] = currentLine[x/8] ^ mask; // and if the neighbour count is not 2 or 3, then
-        // xor the byte that the cell is contained in, with the mask. This will kill the cell
-        // e.g. 010000000 ^ 11111111 = 10111111
+        // XOR the byte that the cell is contained in, with the mask. This will kill the cell
+        // e.g. 11111111 ^ 01000000 = 10111111
       } else { // if the cell is dead
         if (neighbourCount == 3) currentLine[x/8] = currentLine[x/8] | mask; // and if the neighbour count is exactly 3 then
-        // or the byte that the cell is contained in, with the mask. This will resurrect the cell
-        // e.g. 010000000 | 00001111 = 01001111
+        // OR the byte that the cell is contained in, with the mask. This will resurrect the cell
+        // e.g. 00001111 | 01000000 = 01001111
       }
     }
     for (int i = 0; i < BYTEWIDTH; i++) { // iterate through every byte in a row
@@ -142,13 +142,13 @@ void worker(chanend toDistributer, int i) {
   while (2 == 2) { // loop till shutdown
     uchar list[IMHT/WORKERS + 2][BYTEWIDTH]; // the strip of the image
     for (int x = 0; x < BYTEWIDTH; x++) { // iterate through every byte in a row
-      for (int y = 0; y < IMHT/WORKERS + 2; y++) { // iterate through every row in the strip. Including the extra row of bytes above and below
+      for (int y = 0; y < IMHT/WORKERS + 2; y++) { // iterate through every row in the strip. Including the extra rows of bytes above and below
         toDistributer :> list[y][x]; // receive every byte in the strip from the distributer, and store it in the 2d list array
       }
     }
     gameOfLife(list); // run gameOfLife on the 2d array received from the distributer
     toDistributer <: 1; // when processing has finished, send the distributer a 1 to show that the worker is now ready to send the finished cells
-    for (int x = 0; x < BYTEWIDTH; x++) { // iterate through ever byte in a row
+    for (int x = 0; x < BYTEWIDTH; x++) { // iterate through every byte in a row
       for (int y = 1; y < IMHT/WORKERS + 1; y++) { // iterate through every row in the strip, apart from the extra rows of bytes at the top and bottom
         toDistributer <: list[y][x]; // send the finished bytes that contain the finished cells back
       }
@@ -165,9 +165,8 @@ void inputImage(chanend input, uchar bytes[IMHT][BYTEWIDTH]) {
   }
 }
 
-// Initialise an array of bytes and set all the values to 0. It is called initialiseBitsArray as
-// it deals with the 'packed' arrays where each cell is represented by a bit instead of a byte
-void initialiseBitsArray(uchar bits[IMHT][BYTEWIDTH]) {
+// Initialise an array of bytes and set all the values to 0
+void initialiseArray(uchar bits[IMHT][BYTEWIDTH]) {
   for (int y = 0; y < IMHT; y++) { // iterate through every row of the image
     for (int x = 0; x < BYTEWIDTH; x++) { // iterate through every byte in a row
       bits[y][x] = 0; // set the value to zero
@@ -185,25 +184,27 @@ void outputImage(chanend output, uchar bits[IMHT][BYTEWIDTH]) {
   }
 }
 
-//
+// This sends bytes over the given channel to a worker
 void sendBytes(chanend worker, int strip, uchar bits[IMHT][BYTEWIDTH]) {
-  for (int x = 0; x < BYTEWIDTH; x++) {
-    for (int y = strip - 1; y < (strip + IMHT/WORKERS) + 1; y++) {
-      worker <: bits[(y + IMHT) % IMHT][x];
+  for (int x = 0; x < BYTEWIDTH; x++) { // iterate through every byte in a row
+    for (int y = strip - 1; y < (strip + IMHT/WORKERS) + 1; y++) { // iterate through every row in a strip and the two extra rows above and below
+      worker <: bits[(y + IMHT) % IMHT][x]; // send the values to the worker
     }
   }
 }
 
+// Calculate the number of live cells in an image
 int calculateLiveCells(uchar bits[IMHT][BYTEWIDTH]) {
-  int live = 0;
-  for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < IMWD; x++) {
-      if ((bits[y][x/8] >> (x%8)) & 1) { // if alive
-        live++;
+  int live = 0; // Count of live cells
+  for (int y = 0; y < IMHT; y++) { // iterate through every row
+    for (int x = 0; x < IMWD; x++) { // iterate through every byte in a row
+      mask = 1 << (x % 8);
+      if ((bits[y][x/8] & mask) == mask) { // if the cell is alive
+        live++; // increment the counter of live cells
       }
     }
   }
-  return live;
+  return live; // return the number of live cells
 }
 
 // Read Image from PGM file from the file name specified in pgmIO.c to channel c_out
@@ -269,7 +270,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   printf("Processing...\n");
   uchar initialBits[IMHT][BYTEWIDTH];
 
-  initialiseBitsArray(initialBits);
+  initialiseArray(initialBits);
 
   toLEDs <: 4;
   inputImage(c_in, initialBits);
