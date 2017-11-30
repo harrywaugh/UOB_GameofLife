@@ -180,7 +180,7 @@ orientation sensors of the board.
 
 \vspace{5mm}
 
-Time taken for the image size specified on the left column \\
+Time taken in seconds for the image size specified on the left column \\
 to be processed by the number of workers specified on the top row.
 
 \end{center}
@@ -203,12 +203,12 @@ to be processed by the number of workers specified on the top row.
 
 \newgeometry{margin=2cm}
 
-\begin{multicols}{2}
+%\begin{multicols}{2}
 
 % Create a new section.
 \section{Critical Analysis}
 The maximum size our system can process is 1264x1264. Our system can process these large
-images quickly, for example our program processes a 1264x1264 image in ~2.9 seconds. Our system
+images quickly, for example our program processes a 1264x1264 image in roughly 2.9 seconds. Our system
 also does well at processing small images, processing 100 iterations of a 16x16 image in 0.10
 seconds.
 
@@ -220,12 +220,15 @@ when looking at our table, we noticed that there seemed to be diminishing return
 increasing from 4 workers to 8 workers. For example, when processing 100 iterations of a 512x512
 image, there is a 49.3\% decrease in time taken when increasing from 1 to 2 workers. Similarly,
 there is a 48.5\% decrease in time when increasing from 2 to 4 workers. However, when increasing
-from 4 to 8 workers, there was only a 21.3\% decrease in time taken.
+from 4 to 8 workers, there was only a 21.3\% decrease in time taken. This can be seen visually when
+looking at the graph in Figure 9, where the gap between the lines are significantly closer for 4
+and 8 workers. This graphs X axis is the logarithm base 2 of the time taken.
 
 \vspace{3mm}
 
-This will be a new paragraph.
-
+From the data and the graph in Figure 8, we generated a trendline and its equation which allows us
+to estimate the processing time needed to generate various image sizes with different numbers of
+workers.
 
 \vspace{3mm}
 
@@ -234,12 +237,13 @@ sending a 'packed' array to the distributer instead of an array representing eac
 This meant that we were sending a set of values that was 1/8th the size of the set of values that
 was originally being sent. However, reading and writing is still extremely slow. If we had
 more time for improving the system, perhaps this could be improved by reading in multiple lines
-from the file at a time.
-
-
+from the file at a time. Though our system does not deadlock over thousands of iterations, and we have
+tested it extensively manually, an improvement would be to implement these tests as automatic testing.
+Overall, we think that our system performs to the the specification, handling images well beyond 512x512
+in a reasonable time frame. 
 
 % End the two column formatting.
-\end{multicols}
+%\end{multicols}
 
 % End the document.
 \end{document}
