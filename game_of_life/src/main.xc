@@ -10,9 +10,9 @@
 #include <math.h>
 
 
-#define IMHT 256                  //Image height in bits
-#define IMWD 256                  //Image width in bits
-#define BYTEWIDTH 32              //Image width in bytes
+#define IMHT 1264                  //Image height in bits
+#define IMWD 1264                  //Image width in bits
+#define BYTEWIDTH 158              //Image width in bytes
 #define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
 #define WORKERS2 3                //(MUST BE LESS THAN 4)
 #define GENIMG 1
@@ -448,7 +448,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       printf("The time for 100 iterations is %d\n", seconds);
     }
 
-    if (exportCurrent ) {
+    if (exportCurrent) {
       tmr :> timeElapsed;
       uint32_t timePaused = timeElapsed;
       previousTime = currentTime;
@@ -463,7 +463,6 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       tmr :> timeElapsed;
       totalPausedTime += timeElapsed - timePaused;
     }
-
 
     if (iteration % 2 == 0) pattern = 1;
     else pattern = 0;

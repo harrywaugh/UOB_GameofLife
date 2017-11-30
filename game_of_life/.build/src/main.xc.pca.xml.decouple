@@ -1168,12 +1168,12 @@
 <fCall name="_openinpgm" global="true" numArgs="2">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="256"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="256"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
 </fCall>
@@ -1192,7 +1192,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="256"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
 </fCall>
@@ -1213,12 +1213,12 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="256"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
   <arg num="2">
     <values>
-      <value type="intval"><intval isSigned="true" val="256"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
 </fCall>
@@ -1379,94 +1379,6 @@
     </values>
   </arg>
 </fCall>
-<fCall name="printf" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="calculateLiveCells" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="checkOverflow" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="round" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
 <fCall name="checkOverflow" global="true" numArgs="2">
   <arg num="0">
     <values>
@@ -1501,12 +1413,12 @@
 <fCall name="_openoutpgm" global="true" numArgs="3">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="256"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="256"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
   <arg num="2">
@@ -1530,7 +1442,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="256"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
 </fCall>
