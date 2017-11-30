@@ -174,8 +174,8 @@ orientation sensors of the board.
 128x128 & 13.40 & 6.81 & 3.54 & 2.83 \\ \hline
 256x256 & 52.48 & 26.76 & 13.76 & 11.09 \\ \hline
 512x512 & 212.43 & 107.74 & 55.50 & 43.65 \\ \hline
-1024x1024 & todo & todo & 220.34 & 174.81 \\ \hline
-1264x1264 & todo & todo & todo & todo \\ \hline
+1024x1024 & 849.73 & 431.77 & 220.34 & 174.81 \\ \hline
+1264x1264 & 1408.64 & 717.47 & 370.84 & 294.24 \\ \hline
 \end{tabular}
 
 \vspace{5mm}
@@ -207,8 +207,14 @@ to be processed by the number of workers specified on the top row.
 
 % Create a new section.
 \section{Critical Analysis}
-The maximum size our system can process is 1264x1264. Our system can process even these large
-images fairly quickly. Looking at the table at the bottom of page 2 shows the time taken for
+The maximum size our system can process is 1264x1264. Our system can process these large
+images quickly, for example our program processes a 1264x1264 image in ~2.9 seconds. Our system
+also does well at processing small images, processing 100 iterations of a 16x16 image in 0.10
+seconds.
+
+\vspace{3mm}
+
+Looking at the table at the bottom of page 2 shows the time taken for
 100 iterations of the Game-of-Life to be processed using different numbers of workers. Initially,
 when looking at our table, we noticed that there seemed to be diminishing returns, especially when
 increasing from 4 workers to 8 workers. For example, when processing 100 iterations of a 512x512
@@ -218,11 +224,19 @@ from 4 to 8 workers, there was only a 21.3\% decrease in time taken.
 
 \vspace{3mm}
 
+This will be a new paragraph.
+
+
+\vspace{3mm}
+
 We noticed that reading and writing images was very slow initially. We sped this up slightly by
 sending a 'packed' array to the distributer instead of an array representing each cell by a byte.
 This meant that we were sending a set of values that was 1/8th the size of the set of values that
-was originally being sent. However, reading and writing is still extremely slow. Perhaps this
-could be improved by reading in multiple lines at a time
+was originally being sent. However, reading and writing is still extremely slow. If we had
+more time for improving the system, perhaps this could be improved by reading in multiple lines
+from the file at a time.
+
+
 
 % End the two column formatting.
 \end{multicols}
