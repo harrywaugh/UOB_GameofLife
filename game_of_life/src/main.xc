@@ -10,11 +10,11 @@
 #include "i2c.h"
 #include <math.h>
 
-#define IMHT 512                  // Image height in bits
-#define IMWD 512                  // Image width in bits
-#define BYTEWIDTH 64              // Image width in bytes
-#define WORKERS 8                 // Number of workers(MUST BE 11 OR LESS)
-#define WORKERS2 3                // (MUST BE LESS THAN 4)
+#define IMHT 1024                  // Image height in bits
+#define IMWD 1024                  // Image width in bits
+#define BYTEWIDTH 128              // Image width in bytes
+#define WORKERS 2                 // Number of workers(MUST BE 11 OR LESS)
+#define WORKERS2 3                // (MUST B  E LESS THAN 4)
 #define GENIMG 1
 
 typedef unsigned char uchar;      // Using uchar as shorthand
@@ -370,7 +370,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         }
       }
     }
-    if(iteration == 99)  {
+    if(iteration == 99 )  {
       printf("Paused...\n");
                     tmr :> timeElapsed;
                     uint32_t timePaused = timeElapsed;
@@ -395,7 +395,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       printf("The time for 100 iterations is %d\n", seconds);
     }
 
-    if (exportCurrent ) {
+    if (exportCurrent) {
       tmr :> timeElapsed;
       uint32_t timePaused = timeElapsed;
       previousTime = currentTime;
