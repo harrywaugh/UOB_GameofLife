@@ -12,12 +12,11 @@
 
 #define IMHT 1024                  // Image height in bits
 #define IMWD 1024                  // Image width in bits
-#define BYTEWIDTH 128              // Image width in bytes
-#define WORKERS 2                 // Number of workers(MUST BE 11 OR LESS)
-#define WORKERS2 3                // (MUST B  E LESS THAN 4)
-#define GENIMG 1
+#define BYTEWIDTH 128              // Image width in bytes (IMWD/8)
+#define WORKERS 2                  // Number of workers
+#define GENIMG 1                   // Whether or not random image will be generated
 
-typedef unsigned char uchar;      // Using uchar as shorthand
+typedef unsigned char uchar;       // Using uchar as shorthand
 
 on tile[0] : port p_scl = XS1_PORT_1E;         // Interface ports to orientation
 on tile[0] : port p_sda = XS1_PORT_1F;
@@ -36,7 +35,7 @@ on tile[0] : port LEDs = XS1_PORT_4F;          // Leds port
 #define FXOS8700EQ_OUT_Z_LSB 0x6
 
 // DISPLAYS an LED pattern
-int showLEDs(out port p, chanend fromDistributer) { // cant this be a void?
+void showLEDs(out port p, chanend fromDistributer) {
   int pattern; // 1st bit...separate green LED
                // 2nd bit...blue LED
                // 3rd bit...green LED
@@ -46,7 +45,6 @@ int showLEDs(out port p, chanend fromDistributer) { // cant this be a void?
     fromDistributer :> pattern;   // receive new pattern from visualiser
     p <: pattern;                // send pattern to LED port
   }
-  return 0;
 }
 
 // READ BUTTONS and send button pattern to userAnt
@@ -58,10 +56,10 @@ void buttonListener( in port b, chanend toDistributer) {
     b when pinsneq(15) :> r; // Check if some buttons are pressed
     if (r == 13 && start == 1) { // If SW2 is pressed, and the game has started
       toDistributer <: r; // send 13 to the distributer
-      r = 0; // set r back to 13 so that we do not read a button press twice
+      r = 0; // set r back to 0 so that we do not read a button press twice
     } else if (r == 14 && start == 0) { // If sw1 is pressed, then r = 14 (sw2 is r = 13)
       toDistributer <: r; // send 14 to the distributer
-      r = 0; // set r back to 13 so that we do not read a button press twice
+      r = 0; // set r back to 0 so that we do not read a button press twice
       start = 1; // set start to 1 so this else if statement is never entered again
     }
   }
@@ -70,25 +68,24 @@ void buttonListener( in port b, chanend toDistributer) {
 // Takes in an x and y coordinate of a pixel, a 2d array of uchars that the pixel is
 // positioned in, and an array of uchars that represents the previous line
 int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH], uchar prevLine[BYTEWIDTH]) {
-  int BITWIDTH = IMWD; // this line can be removed
   int count = 0; // the number of neighbours
   uchar mask; // a value we will use to mask a byte and check the value of a single bit
 
-  for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) { // this iterates through all of the horizontal bits of the previous line
+  for (int j = x + IMWD - 1; j < x + IMWD + 2; j++) { // this iterates through all of the horizontal bits of the previous line
     mask = 1 << (j % 8); // this mask is used to find if a bit at the (j%8) position of the byte is a 1 or a 0
-    if ((prevLine[(j % BITWIDTH) / 8] & mask) == mask) { // this line checks if the cell is alive
+    if ((prevLine[(j % IMWD) / 8] & mask) == mask) { // this line checks if the cell is alive
       // our mask is a value of 8 bits with only one of them being a 1 e.g 00010000
-      // when you and a byte with this mask, if the bit in the byte at the correct position is a 1,
-      // then the result will be the mask. e.g: 00010000 & 11010001 = 00010000
-      // so if the byte anded with the mask is equal to the mask, then the cell is alive
+      // when you AND a byte with this mask, if the bit in the byte at the correct position is a 1,
+      // then the result will be the mask. e.g: 11010001 & 00010000 = 00010000
+      // so if the byte ANDed with the mask is equal to the mask, then the cell is alive
       count++; // if the cell is alive, increment the number of neighbours
     }
   }
 
-  for (int i = y; i < y + 2; i++) { // this iterates through the line that the ppixel is in, and the line below it
-    for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) { // x + BITWIDTH + 2 can just be x + 2 // this iterates through all of the horizontal bits of a line
+  for (int i = y; i < y + 2; i++) { // iterate through the line that the pixel is in, and the next line
+    for (int j = x + IMWD - 1; j < x + IMWD + 2; j++) { // iterate through all of the horizontal bits of a line
       mask = 1 << (j % 8); // the comments in the loop above explain the masking process
-      if ((matrix[i][(j % BITWIDTH) / 8] & mask) == mask) { // this line checks if the cell is alive
+      if ((matrix[i][(j % IMWD) / 8] & mask) == mask) { // this line checks if the cell is alive
         count++; // if the cell is alive, increment the number of neighbours
       }
     }
@@ -98,20 +95,11 @@ int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH], uch
   // but this time the cell we want to check is the actual cell itself
   if ((matrix[y][x / 8] & mask) == mask) { // check if the cell itself is alive
     count --; // if it is alive, then the loop above would have incremented the count when checking this cell,
-    // so we decrement the cell to account for this
+    // so we decrement the count to account for this
   }
 
   return count; // return the number of neighbours
 }
-
-// Print matrix bytes of height of image in bits, and width of image in bytes.
-/*void printMatrix(uchar matrix[IMHT][BYTEWIDTH]) {
-  for (int i = 0; i < IMHT; i++) {
-    for (int j = 0; j < BYTEWIDTH; j++) printf("%d ", matrix[i][j]);
-    printf("\n");
-  }
-  printf("\n");
-}*/
 
 // gameOfLife takes a strip of the image and performs one iteration of
 // the Game-of-Life on the given strip
