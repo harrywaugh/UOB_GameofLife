@@ -13,7 +13,7 @@
 #define IMHT 1264                  // Image height in bits
 #define IMWD 1264                  // Image width in bits
 #define BYTEWIDTH 158              // Image width in bytes (IMWD/8)
-#define WORKERS 8                  // Number of workers
+#define WORKERS 2                  // Number of workers
 #define GENIMG 1                   // Whether or not random image will be generated
 
 typedef unsigned char uchar;       // Using uchar as shorthand
@@ -353,6 +353,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             break;
         }
       }
+    }
+    if(iteration == 99)  {
+      printReport(timeOverflows,currentTime, totalPausedTime, iteration, initialBits);
     }
 
     if (exportCurrent) {
