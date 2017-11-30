@@ -209,37 +209,37 @@ int calculateLiveCells(uchar bits[IMHT][BYTEWIDTH]) {
 
 // Read Image from PGM file from the file name specified in pgmIO.c to channel c_out
 void DataInStream(chanend c_out) {
-  int res;
-  uchar line[IMWD];
+  int res; // an error code recieved from _openinpgm
+  uchar line[IMWD]; // an array of bytes with each byte representing one cell
   printf("DataInStream: Start...\n");
 
-  if (GENIMG) {
-    for (int i = 0; i < BYTEWIDTH; i++)  {
-      for (int j = 0; j < IMHT; j++)  {
-        c_out <: ((uchar)(rand() % 256));
+  if (GENIMG) { // if we would like to generate an image on the board rather than reading one in
+    for (int i = 0; i < BYTEWIDTH; i++)  { // iterate through each byte in a 'packed' line
+      for (int j = 0; j < IMHT; j++)  { // iterate through every row
+        c_out <: ((uchar)(rand() % 256)); // generate a random byte and send it to the distributer
       }
     }
   } else {
     //Open PGM file
     res = _openinpgm(IMWD, IMHT);
-    if (res) {
+    if (res) { // if error occurs
       printf("DataInStream: Error opening file\n");
       return;
     }
 
-    uchar compressedBits;
+    uchar compressedBits; // value that each byte will be stored in temporarily
+
     //Read image line-by-line and send byte by byte to channel c_out
-    for (int y = 0; y < IMHT; y++) {
-      _readinline(line, IMWD);
-      for (int x = 0; x < BYTEWIDTH; x++) {
-        compressedBits = 0;
-        for(int i = 0; i < 8; i++)  {
-          if (line[x*8+i] == 255) {
-            //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
-            compressedBits = compressedBits | (1 << (i % 8));
+    for (int y = 0; y < IMHT; y++) { // iterate through each row in an image
+      _readinline(line, IMWD); // read each row and store it in line
+      for (int x = 0; x < BYTEWIDTH; x++) { // iterate through each byte in a row
+        compressedBits = 0; // reset compressedBits back to 0
+        for(int i = 0; i < 8; i++)  { // iterate through each bit in a byte
+          if (line[x*8 + i] == 255) { // if the cell is alive
+            compressedBits = compressedBits | (1 << (i % 8)); // then, using by using the OR bitwise operator we can append a bit into the new bit matrix
           }
         }
-        c_out <: compressedBits;
+        c_out <: compressedBits; // send the read in 'packed' bytes to the distributer
 
       }
     }
@@ -251,11 +251,12 @@ void DataInStream(chanend c_out) {
   return;
 }
 
-int checkOverflow(int time1, int time2)  {
-  if(time1 < time2)  {
-    return 1;
+// simple function that compares two values
+int lessThan(int val1, int val2) {
+  if (val1 < val2) { // if val1 is less than val2
+    return 1; // return 1
   }
-  return 0;
+  return 0; // otherwise return 0
 }
 
 // Takes in orginal matrix of pixels. Handles which workers get bytes.
@@ -302,7 +303,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       tmr :> timeElapsed;
       previousTime = currentTime;
       currentTime = timeElapsed - time;
-      if(checkOverflow(currentTime, previousTime))  {
+      if(lessThan(currentTime, previousTime))  {
         timeOverflows++;
         previousTime = currentTime;
       }
@@ -326,7 +327,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
               previousTime = currentTime;
               currentTime = timePaused - time;
-              if(checkOverflow(currentTime, previousTime)) {
+              if(lessThan(currentTime, previousTime)) {
                 timeOverflows++;
                 previousTime = currentTime;
               }
@@ -354,7 +355,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             tmr :> timeElapsed;
             previousTime = currentTime;
             currentTime = timeElapsed - time;
-            if(checkOverflow(currentTime, previousTime))  timeOverflows++;
+            if(lessThan(currentTime, previousTime))  timeOverflows++;
             break;
         }
       }
@@ -369,7 +370,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
                     previousTime = currentTime;
                     currentTime = timePaused - time;
-                    if(checkOverflow(currentTime, previousTime)) {
+                    if(lessThan(currentTime, previousTime)) {
                       timeOverflows++;
                       previousTime = currentTime;
                     }
@@ -389,7 +390,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       uint32_t timePaused = timeElapsed;
       previousTime = currentTime;
       currentTime = timePaused - time;
-      if(checkOverflow(currentTime, previousTime)) {
+      if(lessThan(currentTime, previousTime)) {
         timeOverflows++;
         previousTime = currentTime;
       }
