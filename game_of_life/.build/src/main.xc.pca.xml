@@ -17,7 +17,6 @@
 <fDef name="calculateLiveCells" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="cbrtl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="ceill" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
-<fDef name="checkOverflow" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
 <fDef name="copysignl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="coshl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="cosl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
@@ -44,9 +43,10 @@
 <fDef name="get_write_result" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="1"/>
 <fDef name="hypotl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
 <fDef name="ilogbl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
-<fDef name="initialiseBitsArray" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
-<fDef name="inputImage" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
+<fDef name="initialiseArray" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
+<fDef name="inputImage" global="true" noreturn="false" doNotSpecialize="false" numParams="3"/>
 <fDef name="ldexpl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
+<fDef name="lessThan" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
 <fDef name="lgammal" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="llrintl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
 <fDef name="llroundl" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
@@ -73,6 +73,7 @@
 <fDef name="orientation" global="true" noreturn="true" doNotSpecialize="false" numParams="2"/>
 <fDef name="outputImage" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
 <fDef name="powl" global="true" noreturn="false" doNotSpecialize="true" numParams="2"/>
+<fDef name="printReport" global="true" noreturn="false" doNotSpecialize="false" numParams="5"/>
 <fDef name="read" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="3"/>
 <fDef name="read" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="false" numParams="4"/>
 <fDef name="read_reg" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="true" numParams="4"/>
@@ -88,7 +89,7 @@
 <fDef name="sendBytes" global="true" noreturn="false" doNotSpecialize="false" numParams="3"/>
 <fDef name="send_stop_bit" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="0"/>
 <fDef name="send_stop_bit" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="false" numParams="0"/>
-<fDef name="showLEDs" global="true" noreturn="false" doNotSpecialize="false" numParams="2"/>
+<fDef name="showLEDs" global="true" noreturn="true" doNotSpecialize="false" numParams="2"/>
 <fDef name="shutdown" global="true" interface="i2c_master_async_if" noreturn="false" doNotSpecialize="false" numParams="0"/>
 <fDef name="shutdown" global="true" interface="i2c_master_if" noreturn="false" doNotSpecialize="false" numParams="0"/>
 <fDef name="shutdown" global="true" interface="i2c_slave_callback_if" noreturn="false" doNotSpecialize="false" numParams="0"/>
@@ -1096,18 +1097,6 @@
     </values>
   </arg>
 </fCall>
-<fCall name="pow" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="intval"><intval isSigned="true" val="2"/></value>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
 <fCall name="printf" global="true" numArgs="2">
   <arg num="0">
     <values>
@@ -1139,12 +1128,12 @@
 <fCall name="_openinpgm" global="true" numArgs="2">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
 </fCall>
@@ -1163,7 +1152,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
 </fCall>
@@ -1171,6 +1160,63 @@
 </fCall>
 <fCall name="printf" global="true" numArgs="1">
   <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="round" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="printf" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="printf" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="printf" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="calculateLiveCells" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="printf" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
     <values>
       <value type="unknown"/>
     </values>
@@ -1184,12 +1230,12 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
   <arg num="2">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
 </fCall>
@@ -1207,20 +1253,25 @@
     </values>
   </arg>
 </fCall>
-<fCall name="initialiseBitsArray" global="true" numArgs="1">
+<fCall name="initialiseArray" global="true" numArgs="1">
   <arg num="0">
     <values>
       <value type="unknown"/>
     </values>
   </arg>
 </fCall>
-<fCall name="inputImage" global="true" numArgs="2">
+<fCall name="inputImage" global="true" numArgs="3">
   <arg num="0">
     <passThroughArg param="0" caller="distributor" global="true"/>
     <values>
     </values>
   </arg>
   <arg num="1">
+    <passThroughArg param="4" caller="distributor" global="true"/>
+    <values>
+    </values>
+  </arg>
+  <arg num="2">
     <values>
       <value type="unknown"/>
     </values>
@@ -1243,7 +1294,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="checkOverflow" global="true" numArgs="2">
+<fCall name="lessThan" global="true" numArgs="2">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1262,14 +1313,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="printf" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
+<fCall name="lessThan" global="true" numArgs="2">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1281,7 +1325,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="printf" global="true" numArgs="2">
+<fCall name="printReport" global="true" numArgs="5">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1292,40 +1336,17 @@
       <value type="unknown"/>
     </values>
   </arg>
-</fCall>
-<fCall name="calculateLiveCells" global="true" numArgs="1">
-  <arg num="0">
+  <arg num="2">
     <values>
       <value type="unknown"/>
     </values>
   </arg>
-</fCall>
-<fCall name="checkOverflow" global="true" numArgs="2">
-  <arg num="0">
+  <arg num="3">
     <values>
       <value type="unknown"/>
     </values>
   </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="round" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
+  <arg num="4">
     <values>
       <value type="unknown"/>
     </values>
@@ -1338,7 +1359,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="checkOverflow" global="true" numArgs="2">
+<fCall name="lessThan" global="true" numArgs="2">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1350,95 +1371,7 @@
     </values>
   </arg>
 </fCall>
-<fCall name="printf" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="calculateLiveCells" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="checkOverflow" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="round" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="1">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="printf" global="true" numArgs="2">
-  <arg num="0">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-  <arg num="1">
-    <values>
-      <value type="unknown"/>
-    </values>
-  </arg>
-</fCall>
-<fCall name="checkOverflow" global="true" numArgs="2">
+<fCall name="lessThan" global="true" numArgs="2">
   <arg num="0">
     <values>
       <value type="unknown"/>
@@ -1472,12 +1405,12 @@
 <fCall name="_openoutpgm" global="true" numArgs="3">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
   <arg num="2">
@@ -1501,7 +1434,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1024"/></value>
+      <value type="intval"><intval isSigned="true" val="1264"/></value>
     </values>
   </arg>
 </fCall>
@@ -1748,6 +1681,78 @@
   <arg num="1">
     <values>
       <value type="intval"><intval isSigned="true" val="1"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="2"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="3"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="4"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="5"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="6"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="worker" global="true" numArgs="2" impId="0">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="7"/></value>
     </values>
   </arg>
 </fCall>
