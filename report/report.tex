@@ -207,11 +207,22 @@ to be processed by the number of workers specified on the top row.
 
 % Create a new section.
 \section{Critical Analysis}
-As you can see from Figures 8 and 9, increasing the amount of workers
-
 The maximum size our system can process is 1264x1264. Our system can process even these large
 images fairly quickly. Looking at the table at the bottom of page 2 shows the time taken for
-100 iterations of the Game-of-Life to be processed using different numbers of workers.
+100 iterations of the Game-of-Life to be processed using different numbers of workers. Initially,
+when looking at our table, we noticed that there seemed to be diminishing returns, especially when
+increasing from 4 workers to 8 workers. For example, when processing 100 iterations of a 512x512
+image, there is a 49.3\% decrease in time taken when increasing from 1 to 2 workers. Similarly,
+there is a 48.5\% decrease in time when increasing from 2 to 4 workers. However, when increasing
+from 4 to 8 workers, there was only a 21.3\% decrease in time taken.
+
+\vspace{3mm}
+
+We noticed that reading and writing images was very slow initially. We sped this up slightly by
+sending a 'packed' array to the distributer instead of an array representing each cell by a byte.
+This meant that we were sending a set of values that was 1/8th the size of the set of values that
+was originally being sent. However, reading and writing is still extremely slow. Perhaps this
+could be improved by reading in multiple lines at a time
 
 % End the two column formatting.
 \end{multicols}
