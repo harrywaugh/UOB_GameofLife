@@ -1,3 +1,4 @@
+
 // COMS20001 - Cellular Automaton Farm - Initial Code Skeleton
 // (using the XMOS i2c accelerometer demo code)
 
@@ -9,23 +10,21 @@
 #include "i2c.h"
 #include <math.h>
 
-
-#define IMHT 1264                  //Image height in bits
-#define IMWD 1264                  //Image width in bits
-#define BYTEWIDTH 158              //Image width in bytes
-#define WORKERS 8                 //Number of workers(MUST BE 11 OR LESS)
-#define WORKERS2 3                //(MUST BE LESS THAN 4)
+#define IMHT 512                  // Image height in bits
+#define IMWD 512                  // Image width in bits
+#define BYTEWIDTH 64              // Image width in bytes
+#define WORKERS 8                 // Number of workers(MUST BE 11 OR LESS)
+#define WORKERS2 3                // (MUST BE LESS THAN 4)
 #define GENIMG 1
 
+typedef unsigned char uchar;      // Using uchar as shorthand
 
-typedef unsigned char uchar;      //Using uchar as shorthand
-
-on tile[0] : port p_scl = XS1_PORT_1E;         //Interface ports to orientation
+on tile[0] : port p_scl = XS1_PORT_1E;         // Interface ports to orientation
 on tile[0] : port p_sda = XS1_PORT_1F;
-on tile[0] : port buttons = XS1_PORT_4E;       //Buttons port
-on tile[0] : port LEDs = XS1_PORT_4F;          //Leds port
+on tile[0] : port buttons = XS1_PORT_4E;       // Buttons port
+on tile[0] : port LEDs = XS1_PORT_4F;          // Leds port
 
-#define FXOS8700EQ_I2C_ADDR 0x1E  //Register addresses for orientation
+#define FXOS8700EQ_I2C_ADDR 0x1E  // Register addresses for orientation
 #define FXOS8700EQ_XYZ_DATA_CFG_REG 0x0E
 #define FXOS8700EQ_CTRL_REG_1 0x2A
 #define FXOS8700EQ_DR_STATUS 0x0
@@ -36,209 +35,169 @@ on tile[0] : port LEDs = XS1_PORT_4F;          //Leds port
 #define FXOS8700EQ_OUT_Z_MSB 0x5
 #define FXOS8700EQ_OUT_Z_LSB 0x6
 
-//DISPLAYS an LED pattern
-int showLEDs(out port p, chanend fromDistributer) {
-  int pattern; //1st bit...separate green LED
-               //2nd bit...blue LED
-               //3rd bit...green LED
-               //4th bit...red LED
+// DISPLAYS an LED pattern
+int showLEDs(out port p, chanend fromDistributer) { // cant this be a void?
+  int pattern; // 1st bit...separate green LED
+               // 2nd bit...blue LED
+               // 3rd bit...green LED
+               // 4th bit...red LED
 
-  // 1 = just sep green LED
-  // 2 = just blue LED
-  // 3 = sep green and blue LED
-  // 4 = just green LED
-  // 5 = green and sep green LED
-  // 6 = green and blue LED
-  // 7 = green and blue and sep green LED
-  // 8 = red LED
-
-  while (1) {
-    fromDistributer :> pattern;   //receive new pattern from visualiser
-    p <: pattern;                //send pattern to LED port
+  while (1) { //loop till shutdown
+    fromDistributer :> pattern;   // receive new pattern from visualiser
+    p <: pattern;                // send pattern to LED port
   }
   return 0;
 }
 
-//READ BUTTONS and send button pattern to userAnt
+// READ BUTTONS and send button pattern to userAnt
 void buttonListener( in port b, chanend toDistributer) {
-  int r;
-  int start = 0;
+  int r; // value that button press is read into
+  int start = 0; // whether or not the processing has started
   while (1) {
-    b when pinseq(15) :> r; //Check that no button is pressed
-    b when pinsneq(15) :> r; //Check if some buttons are pressed
-    if (r == 13 && start == 1) { //If SW2 is pressed, and the game has started
-      toDistributer <: r;
-      r = 0;
-    } else if (r == 14 && start == 0) { //If sw1 is pressed, then r = 14 (sw2 is r = 13)
-      toDistributer <: r;
-      r = 0; //Send button pattern to distributer
-      start = 1;
+    b when pinseq(15) :> r; // Check that no button is pressed
+    b when pinsneq(15) :> r; // Check if some buttons are pressed
+    if (r == 13 && start == 1) { // If SW2 is pressed, and the game has started
+      toDistributer <: r; // send 13 to the distributer
+      r = 0; // set r back to 13 so that we do not read a button press twice
+    } else if (r == 14 && start == 0) { // If sw1 is pressed, then r = 14 (sw2 is r = 13)
+      toDistributer <: r; // send 14 to the distributer
+      r = 0; // set r back to 13 so that we do not read a button press twice
+      start = 1; // set start to 1 so this else if statement is never entered again
     }
   }
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Takes a 3 by 3 array of bytes, and x and y coordinate of the desired bit.
-// Returns the amount of 1's that surround the desired bit.
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-
-
+// Takes in an x and y coordinate of a pixel, a 2d array of uchars that the pixel is
+// positioned in, and an array of uchars that represents the previous line
 int countNeighbours(int x, int y, uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH], uchar prevLine[BYTEWIDTH]) {
-  int BITWIDTH = IMWD;
-  int count = 0;
-  uchar mask;
-  for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) {
-    mask = 1 << (j % 8);
-    if ((prevLine[(j % BITWIDTH) / 8] & mask) == mask) {
-      count++;
+  int BITWIDTH = IMWD; // this line can be removed
+  int count = 0; // the number of neighbours
+  uchar mask; // a value we will use to mask a byte and check the value of a single bit
+
+  for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) { // this iterates through all of the horizontal bits of the previous line
+    mask = 1 << (j % 8); // this mask is used to find if a bit at the (j%8) position of the byte is a 1 or a 0
+    if ((prevLine[(j % BITWIDTH) / 8] & mask) == mask) { // this line checks if the cell is alive
+      // our mask is a value of 8 bits with only one of them being a 1 e.g 00010000
+      // when you and a byte with this mask, if the bit in the byte at the correct position is a 1,
+      // then the result will be the mask. e.g: 00010000 & 11010001 = 00010000
+      // so if the byte anded with the mask is equal to the mask, then the cell is alive
+      count++; // if the cell is alive, increment the number of neighbours
     }
   }
 
-  for (int i = y; i < y + 2; i++) {
-    for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) {
-      mask = 1 << (j % 8);
-      if ((matrix[i][(j % BITWIDTH) / 8] & mask) == mask) {
-        count++;
+  for (int i = y; i < y + 2; i++) { // this iterates through the line that the ppixel is in, and the line below it
+    for (int j = x + BITWIDTH - 1; j < x + BITWIDTH + 2; j++) { // x + BITWIDTH + 2 can just be x + 2 // this iterates through all of the horizontal bits of a line
+      mask = 1 << (j % 8); // the comments in the loop above explain the masking process
+      if ((matrix[i][(j % BITWIDTH) / 8] & mask) == mask) { // this line checks if the cell is alive
+        count++; // if the cell is alive, increment the number of neighbours
       }
     }
   }
 
-  mask = 1 << (x % 8);
-  if ((matrix[y][x / 8] & mask) == mask) {
-    count --;
+  mask = 1 << (x % 8); // this time the mask uses x instead of j. This is because before j represented the x coordinate we were checking
+  // but this time the cell we want to check is the actual cell itself
+  if ((matrix[y][x / 8] & mask) == mask) { // check if the cell itself is alive
+    count --; // if it is alive, then the loop above would have incremented the count when checking this cell,
+    // so we decrement the cell to account for this
   }
 
-  return count;
+  return count; // return the number of neighbours
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
 // Print matrix bytes of height of image in bits, and width of image in bytes.
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-void printMatrix(uchar matrix[IMHT][BYTEWIDTH]) {
+/*void printMatrix(uchar matrix[IMHT][BYTEWIDTH]) {
   for (int i = 0; i < IMHT; i++) {
     for (int j = 0; j < BYTEWIDTH; j++) printf("%d ", matrix[i][j]);
     printf("\n");
   }
   printf("\n");
-}
+}*/
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-//GameOfLife, takes a 3 by 3 matrix of bytes.
-//Performs one iteration of Game of life on the middle byte of the matrix.
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-
-
-
+// gameOfLife takes a strip of the image and performs one iteration of
+// the Game-of-Life on the given strip
 void gameOfLife(uchar matrix[IMHT/WORKERS + 2][BYTEWIDTH]) {
-  uchar mask;
-  uchar previousLine[BYTEWIDTH], currentLine[BYTEWIDTH];
-  //COPY FIRSTLINE
-  for(int i = 0; i < BYTEWIDTH; i++)  {
-    previousLine[i] = matrix[0][i];
-    currentLine[i] = matrix[1][i];
-  }
-//  //uchar oldMatrix[IMHT/WORKERS + 2][BYTEWIDTH];
-//  for (int y = 0; y < IMHT/WORKERS + 2; y++)  {
-//    for (int x = 0; x < BYTEWIDTH; x++)  {
-//      oldMatrix[y][x] = matrix[y][x];
-//    }
-//  }
+  uchar mask; // a value we will use to mask a byte and check the value of a single bit
+  uchar previousLine[BYTEWIDTH], currentLine[BYTEWIDTH]; // array of uchars that contain the previous line and current line to be processed on
 
-  for (int y = 1; y < IMHT/WORKERS + 1; y++) {
-    for (int x = 0; x < IMWD; x++) {
-      int neighbourCount = countNeighbours(x, y, matrix, previousLine);
-      mask = (uchar) pow(2, x % 8);
-      if ((matrix[y][x/8] & mask) == mask) { // if alive
-        if (neighbourCount != 2 && neighbourCount != 3) currentLine[x/8] = currentLine[x/8] ^ mask;
-      } else { // if dead
-        if (neighbourCount == 3) currentLine[x/8] = currentLine[x/8] | mask;
+  for (int i = 0; i < BYTEWIDTH; i++) { // iterate through every byte in a row
+    previousLine[i] = matrix[0][i]; // copy the first line of the matrix into previousLine
+    currentLine[i] = matrix[1][i]; // copy the second line of the matrix into currentLine
+  }
+
+  for (int y = 1; y < IMHT/WORKERS + 1; y++) { // iterate through every row in the strip provided apart from the first and last
+    for (int x = 0; x < IMWD; x++) { // iterate through every pixel
+      int neighbourCount = countNeighbours(x, y, matrix, previousLine); // calculate the number of neighbours that the pixel at the current x and y has
+      mask = (uchar) pow(2, x % 8); // cant this be the new mask style? // masking is explained in the count neighbours function
+      if ((matrix[y][x/8] & mask) == mask) { // if the cell at the x and y position is alive
+        if (neighbourCount != 2 && neighbourCount != 3) currentLine[x/8] = currentLine[x/8] ^ mask; // and if the neighbour count is not 2 or 3, then
+        // xor the byte that the cell is contained in, with the mask. This will kill the cell
+        // e.g. 010000000 ^ 11111111 = 10111111
+      } else { // if the cell is dead
+        if (neighbourCount == 3) currentLine[x/8] = currentLine[x/8] | mask; // and if the neighbour count is exactly 3 then
+        // or the byte that the cell is contained in, with the mask. This will resurrect the cell
+        // e.g. 010000000 | 00001111 = 01001111
       }
     }
-    for(int i = 0; i < BYTEWIDTH; i++)  {
-      previousLine[i] = matrix[y][i];
-      matrix[y][i] = currentLine[i];
-      currentLine[i] = matrix[y+1][i];
+    for (int i = 0; i < BYTEWIDTH; i++) { // iterate through every byte in a row
+      previousLine[i] = matrix[y][i]; // copy the untouched line of the matrix to the previousLine to be used on in the next countNeighbours call
+      matrix[y][i] = currentLine[i]; // copy the currentLine that was worked on to the updated matrix
+      currentLine[i] = matrix[y+1][i]; // copy the next line to be worked on to currentLine
     }
   }
 
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Converts the given matrix of uchars, where each uchar is either 255 or 0
-// to a matrix of uchars, where each byte stores 8 of the previous matrixes uchars.
-// Now each pxixel in the image is represented by a single bit.
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-//void bytesToBits(uchar bytes[IMHT][IMWD], uchar bits[IMHT][BYTEWIDTH]) {
-//
-//  //Go through each uchar in the old matrix
-//  for (int y = 0; y < IMHT; y++) {
-//    for (int x = 0; x < IMWD; x++) {
-//      //If uchar represents an alive pixel
-//      if (bytes[y][x] == 255) {
-//        //Then, using by using the OR bitwise operator we can append a bit into the new bit matrix.
-//        bits[y][x / 8] = bits[y][x / 8] | (uchar) pow(2, (x % 8));
-//      }
-//    }
-//  }
-//}
-
-
-
+// This is a worker thread. Given a strip of the image, it will run gameOfLife on this strip, and will send back the
+// updated bytes to the distributer.
 void worker(chanend toDistributer, int i) {
   printf("WORKER %d STARTED\n", i);
-  while (2 == 2) {
-    uchar list[IMHT/WORKERS + 2][BYTEWIDTH];
-    for (int x = 0; x < BYTEWIDTH; x++) {
-      for (int y = 0; y < IMHT/WORKERS + 2; y++) {
-        toDistributer :> list[y][x];
-        //printf("%d ", list[y][x]);
+  while (2 == 2) { // loop till shutdown
+    uchar list[IMHT/WORKERS + 2][BYTEWIDTH]; // the strip of the image
+    for (int x = 0; x < BYTEWIDTH; x++) { // iterate through every byte in a row
+      for (int y = 0; y < IMHT/WORKERS + 2; y++) { // iterate through every row in the strip. Including the extra row of bytes above and below
+        toDistributer :> list[y][x]; // receive every byte in the strip from the distributer, and store it in the 2d list array
       }
     }
-    gameOfLife(list);
-    toDistributer <: 1;
-    for (int x = 0; x < BYTEWIDTH; x++) {
-      for (int y = 1; y < IMHT/WORKERS + 1; y++) {
-        toDistributer <: list[y][x];
+    gameOfLife(list); // run gameOfLife on the 2d array received from the distributer
+    toDistributer <: 1; // when processing has finished, send the distributer a 1 to show that the worker is now ready to send the finished cells
+    for (int x = 0; x < BYTEWIDTH; x++) { // iterate through ever byte in a row
+      for (int y = 1; y < IMHT/WORKERS + 1; y++) { // iterate through every row in the strip, apart from the extra rows of bytes at the top and bottom
+        toDistributer <: list[y][x]; // send the finished bytes that contain the finished cells back
       }
     }
   }
 }
 
+// Recieve the bytes from the input channel, and store them in the 2d uchar of bytes provided
 void inputImage(chanend input, uchar bytes[IMHT][BYTEWIDTH]) {
-  for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < BYTEWIDTH; x++) {
-      input :> bytes[y][x];
+  for (int y = 0; y < IMHT; y++) { // iterate through every row of the image
+    for (int x = 0; x < BYTEWIDTH; x++) { // iterate through every byte in a row
+      input :> bytes[y][x]; // receive the bytes from the channel and place them into the correct position of the bytes array
     }
   }
 }
 
+// Initialise an array of bytes and set all the values to 0. It is called initialiseBitsArray as
+// it deals with the 'packed' arrays where each cell is represented by a bit instead of a byte
 void initialiseBitsArray(uchar bits[IMHT][BYTEWIDTH]) {
-  for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < BYTEWIDTH; x++) {
-      bits[y][x] = 0;
+  for (int y = 0; y < IMHT; y++) { // iterate through every row of the image
+    for (int x = 0; x < BYTEWIDTH; x++) { // iterate through every byte in a row
+      bits[y][x] = 0; // set the value to zero
     }
   }
 }
 
+// Send the bytes over the given output channel to DataOutStream
 void outputImage(chanend output, uchar bits[IMHT][BYTEWIDTH]) {
-  output <: 1;
-  for (int y = 0; y < IMHT; y++) {
-    for (int x = 0; x < BYTEWIDTH; x++) {
-      output <: bits[y][x];
+  output <: 1; // send a 1 over the output channel to tell the DataOutStream that we are about to send byte values
+  for (int y = 0; y < IMHT; y++) { // iterate through every row of the image
+    for (int x = 0; x < BYTEWIDTH; x++) { // iterate through every byte in a row
+      output <: bits[y][x]; // send the 'packed' bytes over the channel
     }
   }
 }
 
-
+//
 void sendBytes(chanend worker, int strip, uchar bits[IMHT][BYTEWIDTH]) {
   for (int x = 0; x < BYTEWIDTH; x++) {
     for (int y = strip - 1; y < (strip + IMHT/WORKERS) + 1; y++) {
@@ -246,10 +205,6 @@ void sendBytes(chanend worker, int strip, uchar bits[IMHT][BYTEWIDTH]) {
     }
   }
 }
-
-int getXfromCount(int count) { return count % BYTEWIDTH; }
-
-int getYfromCount(int count) { return count / BYTEWIDTH; }
 
 int calculateLiveCells(uchar bits[IMHT][BYTEWIDTH]) {
   int live = 0;
@@ -263,18 +218,7 @@ int calculateLiveCells(uchar bits[IMHT][BYTEWIDTH]) {
   return live;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Takes in orginal matrix of pixels. Handles which workers get bytes.
-// Recompiles them into next iteration of matrix. Handles exporting of matrix.
-//
-/////////////////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////////////////////////////////
-//
-// Read Image from PGM file from path infname[] to channel c_out
-//
-/////////////////////////////////////////////////////////////////////////////////////////
+// Read Image from PGM file from the file name specified in pgmIO.c to channel c_out
 void DataInStream(chanend c_out) {
   int res;
   uchar line[IMWD];
@@ -325,6 +269,8 @@ int checkOverflow(int time1, int time2)  {
   return 0;
 }
 
+// Takes in orginal matrix of pixels. Handles which workers get bytes.
+// Recompiles them into next iteration of matrix. Handles exporting of matrix.
 void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButton, chanend toLEDs, chanend toWorkers[WORKERS]) {
   //Starting up and wait for tilting of the xCore-200 Explorer
   printf("ProcessImage: Start, size = %dx%d\n", IMHT, IMWD);
@@ -399,7 +345,8 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
               printf("Time elapsed so far: %.2f\n", seconds);
               fromAcc :> tilted;
               tmr :> timeElapsed;
-              totalPausedTime += timeElapsed - timePaused;
+              totalPausedTime += timeElapsed - timePaused; // cant we say currentTime -= (timeElapsed - timePaused) and then we
+              // dont have to print currentTime - totalPaused time, we just print current time
 
               printf("Resuming...\n");
               toLEDs <: pattern;
@@ -448,7 +395,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       printf("The time for 100 iterations is %d\n", seconds);
     }
 
-    if (exportCurrent) {
+    if (exportCurrent ) {
       tmr :> timeElapsed;
       uint32_t timePaused = timeElapsed;
       previousTime = currentTime;
@@ -463,6 +410,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       tmr :> timeElapsed;
       totalPausedTime += timeElapsed - timePaused;
     }
+
 
     if (iteration % 2 == 0) pattern = 1;
     else pattern = 0;
@@ -522,11 +470,7 @@ void DataOutStream(chanend c_in) {
   return;
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
 // Initialise and  read orientation, send first tilt event to channel
-//
-/////////////////////////////////////////////////////////////////////////////////////////
 void orientation(client interface i2c_master_if i2c, chanend toDist) {
   i2c_regop_res_t result;
   char status_data = 0;
@@ -568,11 +512,7 @@ void orientation(client interface i2c_master_if i2c, chanend toDist) {
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
 // Orchestrate concurrent system and start up all threads
-//
-/////////////////////////////////////////////////////////////////////////////////////////
 int main(void) {
   i2c_master_if i2c[1]; //interface to orientation
   chan c_inIO, c_outIO, c_control, buttonToDist, distToLED; //extend your channel definitions here
