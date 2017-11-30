@@ -27,7 +27,7 @@ Our system currently uses up to 8 workers to evolve the Game-of-Life repeatedly.
 deadlock-free, implements the correct button, board orientation, and LED behaviour, and can process
 images up to 1264x1264 pixels using memory on both tiles.
 
-\vspace{5mm}
+\vspace{3mm}
 
 The biggest problem we encountered was trying to run images bigger than 512x512. Originally we were
 reading the bits from the .pgm file into a 2 dimensional array of \texttt{unsigned chars}, before 'packing'
@@ -42,7 +42,7 @@ each byte and sent each byte to the distributer as we read from the file. This m
 of storing an entire array of \texttt{unsigned chars} of size \texttt{[ImageHeight][ImageWidth / 8]}, we stored a single
 \texttt{unsigned char}.
 
-\vspace{5mm}
+\vspace{3mm}
 
 We also encountered problems while implementing a timer. The first problem was that the timer seemed
 to overflow roughly every 42 seconds. We decided to create a function that would compare two times
@@ -52,7 +52,7 @@ how many times the timer has overflowed. The time displayed would be the timers 
 to the overflow value multiplied by the counter value. Using this method, our clock no longer
 overflowed.
 
-\vspace{5mm}
+\vspace{3mm}
 
 Early on in the development of our system, our workers functioned differently. Each worker would work
 on a single byte of data. We would send each worker a 3x3 array of \texttt{unsigned chars}, with the middle
@@ -70,7 +70,15 @@ For each image provided to us, we will show the image after 1, 2 and 100
 iterations respectively. We will also include randomly generated 1024x1024 and 1264x1264 images and their
 subsequent iterations. The results are shown in Figures 1-7.
 
-\vspace{5mm}
+\vspace{3mm}
+
+The biggest virtue of our system is the size of images that we can process succesfully. We spent a long
+time redesigning the way our \texttt{worker, dataInStream, dataOutStream, distributer,} and \texttt{gameOfLife}
+functions worked. By only storing one 'packed' array of bytes in the \texttt{distributer} and only the previous and current
+line to be processed in \texttt{gameOfLife}, and only storing one temporary \texttt{unsigned char} in \texttt{dataInStream},
+we managed to process images up to 1264x1264.
+
+\vspace{3mm}
 
 We carried out experiments comparing the time taken for an image to be processed when using different
 workers. We experimented with using 1, 2, 4, and 8 workers. The results are show in Figures 8 and 9. We
@@ -79,7 +87,7 @@ time taken for each worker to generate 100 iterations of that image. The time ta
 the Game-of-Life to be processed for each image size is provided in the table shown at the bottom of page
 2. This also includes the number of workers used.
 
-\vspace{5mm}
+\vspace{3mm}
 
 One limitation of our system is that it can only work on images that have a width that is divisible by
 8. This is due to the fact that we 'pack' 8 pixels into an \texttt{unsigned char} to represent each pixel by
@@ -200,6 +208,10 @@ to be processed by the number of workers specified on the top row.
 % Create a new section.
 \section{Critical Analysis}
 As you can see from Figures 8 and 9, increasing the amount of workers
+
+The maximum size our system can process is 1264x1264. Our system can process even these large
+images fairly quickly. Looking at the table at the bottom of page 2 shows the time taken for
+100 iterations of the Game-of-Life to be processed using different numbers of workers.
 
 % End the two column formatting.
 \end{multicols}
