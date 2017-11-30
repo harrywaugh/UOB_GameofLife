@@ -30,17 +30,17 @@ images up to 1264x1264 pixels using memory on both tiles.
 \vspace{5mm}
 
 The biggest problem we encountered was trying to run images bigger than 512x512. Originally we were
-reading the bits from the .pgm file into a 2 dimensional array of unsigned chars, before 'packing'
+reading the bits from the .pgm file into a 2 dimensional array of \texttt{unsigned chars}, before 'packing'
 this array into an array of unsigned chars that represented each pixel by a bit instead of a byte.
 This packing process allowed us to save space as we only had to store an array which was 1/8th the
 size of the original array. We proccessed the Game-of-Life on this array. Eventually we had to
-free even more space in order to run larger images. To do this, we changed the dataInStream function,
+free even more space in order to run larger images. To do this, we changed the \texttt{dataInStream} function,
 so that it read the pixel values straight into the smaller array, representing each pixel as a
 single bit. At this point we could process images up to 688x688. We then then realised that in
-\texttt{dataInStream}, we didn't have to store an unsigned char array at all. We simply processed
+\texttt{dataInStream}, we didn't have to store an \texttt{unsigned char} array at all. We simply processed
 each byte and sent each byte to the distributer as we read from the file. This meant that instead
-of storing an entire array of unsigned chars of size [ImageHeight][ImageWidth / 8], we stored a single
-unsigned char.
+of storing an entire array of \texttt{unsigned chars} of size \texttt{[ImageHeight][ImageWidth / 8]}, we stored a single
+\texttt{unsigned char}.
 
 \vspace{5mm}
 
@@ -55,7 +55,7 @@ overflowed.
 \vspace{5mm}
 
 Early on in the development of our system, our workers functioned differently. Each worker would work
-on a single byte of data. We would send each worker a 3x3 array of unsigned chars, with the middle
+on a single byte of data. We would send each worker a 3x3 array of \texttt{unsigned chars}, with the middle
 char being the char that the worker would work on. The worker would then send only the completed
 char back. We realised that this was very inefficient as each worker required 8 extra bytes to work
 on a single byte. Image processing was very slow using this method so we decided to update
@@ -73,12 +73,12 @@ subsequent iterations. The results are shown in Figures 1-7.
 \vspace{5mm}
 
 We carried out experiments comparing the time taken for an image to be processed when using different
-workers. We experimented with using 1, 2, 4, and 8 workers. The results are show in Figure...
+workers. We experimented with using 1, 2, 4, and 8 workers. The results are show in Figures 8 and 9.
 
 \vspace{5mm}
 
 One limitation of our system is that it can only work on images that have a width that is divisible by
-8. This is due to the fact that we 'pack' 8 pixels into an unsigned char to represent each pixel by
+8. This is due to the fact that we 'pack' 8 pixels into an \texttt{unsigned char} to represent each pixel by
 a single bit. Another limitation of our system is the size of images it can process, due to the limited
 amount of memory provided by the board. In order to process images any larger than 1272x1272, we would
 have to either, attach another board to our own, or remove the functionality of the buttons, LEDs and
@@ -153,13 +153,31 @@ orientation sensors of the board.
 \caption{64x64 image after 0, 1, 2, 3, 100, and 1000 iterations respectively.}
 \end{figure}
 
+\begin{multicols}{2}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=9.5cm]{ImvsLog(Time).png}
+\caption{Graph 1}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=9.5cm]{ImvsLog(Time).png}
+\caption{Graph 2.}
+\end{figure}
+
+\end{multicols}
+
+\newgeometry{margin=2cm}
+
+\begin{multicols}{2}
+
 % Create a new section.
 \section{title new}
 For each image provided to us, we will show the initial image along side the image after 1, 2 and 100
 iterations respectively. We will also include randomly generated 1024x1024 and 1264x1264 images. The
 results are shown in Figure...
-
-\newgeometry{margin=1cm}
 
 % Create a new section.
 \section{How to create a bulleted list}
@@ -182,7 +200,7 @@ Then we can carry on the section. But we must be careful because the beginning o
 This is a new Section. This one should wrap too. This is the third section.
 
 % End the two column formatting.
-%\end{multicols}
+\end{multicols}
 
 % End the document.
 \end{document}
