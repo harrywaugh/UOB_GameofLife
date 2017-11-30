@@ -73,7 +73,11 @@ subsequent iterations. The results are shown in Figures 1-7.
 \vspace{5mm}
 
 We carried out experiments comparing the time taken for an image to be processed when using different
-workers. We experimented with using 1, 2, 4, and 8 workers. The results are show in Figures 8 and 9.
+workers. We experimented with using 1, 2, 4, and 8 workers. The results are show in Figures 8 and 9. We
+generated the first graph by plotting the image size against the time in seconds. Each line represents the
+time taken for each worker to generate 100 iterations of that image. The time taken for 100 iterations of
+the Game-of-Life to be processed for each image size is provided in the table shown at the bottom of page
+2. This also includes the number of workers used.
 
 \vspace{5mm}
 
@@ -152,6 +156,26 @@ orientation sensors of the board.
 \includegraphics[width=3cm]{pngimages/64-1000.png}
 \caption{64x64 image after 0, 1, 2, 3, 100, and 1000 iterations respectively.}
 \end{figure}
+
+\begin{center}
+\begin{tabular}{ | l | l | l | l | l |}
+\hline
+   & 1 & 2 & 4 & 8 \\ \hline
+16x16 & 0.27 & 0.16 & 0.11 & 0.10 \\ \hline
+64x64 & 3.50 & 1.82 & 1.00 & 0.81 \\ \hline
+128x128 & 13.40 & 6.81 & 3.54 & 2.83 \\ \hline
+256x256 & 52.48 & 26.76 & 13.76 & 11.09 \\ \hline
+512x512 & 212.43 & 107.74 & 55.50 & 43.65 \\ \hline
+1024x1024 & todo & todo & 220.34 & 174.81 \\ \hline
+1264x1264 & todo & todo & todo & todo \\ \hline
+\end{tabular}
+
+\vspace{5mm}
+
+Time taken for the image size specified on the left column \\
+to be processed by the number of workers specified on the top row.
+
+\end{center}
 
 \newpage
 
