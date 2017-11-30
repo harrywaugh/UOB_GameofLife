@@ -10,11 +10,11 @@
 #include "i2c.h"
 #include <math.h>
 
-#define IMHT 1264                  // Image height in bits
-#define IMWD 1264                  // Image width in bits
-#define BYTEWIDTH 158              // Image width in bytes (IMWD/8)
-#define WORKERS 2                  // Number of workers
-#define GENIMG 1                   // Whether or not random image will be generated
+#define IMHT 16                  // Image height in bits
+#define IMWD 16                  // Image width in bits
+#define BYTEWIDTH 2              // Image width in bytes (IMWD/8)
+#define WORKERS 8                  // Number of workers
+#define GENIMG 0                   // Whether or not random image will be generated
 
 typedef unsigned char uchar;       // Using uchar as shorthand
 
@@ -262,6 +262,7 @@ int lessThan(int val1, int val2) {
   return 0; // otherwise return 0
 }
 
+// prints the neccessary information when tilting the board
 void printReport(int timeOverflows, int currentTime, int totalPausedTime, int iteration, uchar initialBits[IMHT][BYTEWIDTH]) {
   double seconds = round(timeOverflows*(4294967295/100000) + currentTime/100000 - totalPausedTime/100000)/1000 ;
   printf("Paused...\n");
@@ -293,6 +294,7 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
   tmr :> time;
 
 
+  // loop until shutdown
   while (2 == 2)  {
     stripsComplete = 0;
     exportCurrent = 0;
@@ -306,8 +308,9 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         timeOverflows++;
         previousTime = currentTime;
       }
-
     }
+
+    // process each strip
     while (stripsComplete < WORKERS)  {
       for(int w = 0; w < WORKERS; w++)  { // iterate through every worker
         select {
@@ -353,9 +356,6 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
             break;
         }
       }
-    }
-    if(iteration == 99)  {
-      printReport(timeOverflows,currentTime, totalPausedTime, iteration, initialBits);
     }
 
     if (exportCurrent) {
