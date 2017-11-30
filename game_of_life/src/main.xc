@@ -281,14 +281,11 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
 
   printf("Processing...\n");
   uchar initialBits[IMHT][BYTEWIDTH];
-
   initialiseArray(initialBits);
-
   inputImage(c_in, toLEDs, initialBits);
 
 
   int iteration = 0, exportCurrent = 0, stripsComplete = 0;
-
   int pattern = 1;
   int timeOverflows = 0;
   timer tmr;
@@ -309,36 +306,36 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
         timeOverflows++;
         previousTime = currentTime;
       }
+
     }
     while (stripsComplete < WORKERS)  {
-      for(int w = 0; w < WORKERS; w++)  {
+      for(int w = 0; w < WORKERS; w++)  { // iterate through every worker
         select {
           case fromButton :> exportCurrent:
             printf("Export button pressed.\n");
-            w--;
+            w--; // since this is in a worker loop, we dont want a worker to be skipped over so we decrement the worker counter
             break;
           case fromAcc :> int tilted:
             if (tilted == 1) {
+              // timing code starts
               tmr :> timeElapsed;
               uint32_t timePaused = timeElapsed;
-              toLEDs <: 8;
-
+              toLEDs <: 8; // send correct LED pattern
               previousTime = currentTime;
               currentTime = timePaused - time;
               if(lessThan(currentTime, previousTime)) {
                 timeOverflows++;
                 previousTime = currentTime;
               }
-              printReport(timeOverflows,currentTime, totalPausedTime, iteration, initialBits);
+              printReport(timeOverflows,currentTime, totalPausedTime, iteration, initialBits); // print all relevant information
               fromAcc :> tilted;
               tmr :> timeElapsed;
-              totalPausedTime += timeElapsed - timePaused; // cant we say currentTime -= (timeElapsed - timePaused) and then we
-              // dont have to print currentTime - totalPaused time, we just print current time
-
+              totalPausedTime += timeElapsed - timePaused;
+              // timing code finsihed
               printf("Resuming...\n");
-              toLEDs <: pattern;
+              toLEDs <: pattern; // send back whatever pattern was showing before paused
             }
-            w--;
+            w--; // since this is in a worker loop, we dont want a worker to be skipped over so we decrement the worker counter
             break;
           case toWorkers[w] :> int received:
             for (short x = 0; x < BYTEWIDTH; x++) {
@@ -374,19 +371,15 @@ void distributor(chanend c_in, chanend c_out, chanend fromAcc, chanend fromButto
       totalPausedTime += timeElapsed - timePaused;
     }
 
-    if (iteration % 2 == 0) pattern = 1;
+    if (iteration % 2 == 0) pattern = 1; // alternate the green LED so it flashes on and off
     else pattern = 0;
 
-    toLEDs <: pattern;
-    iteration++;
+    toLEDs <: pattern; // send the  updated pattern to the LEDs
+    iteration++; // increment the number of iterations
   }
 }
 
-/////////////////////////////////////////////////////////////////////////////////////////
-//
 // Write pixel stream from channel c_in to PGM image file
-//
-/////////////////////////////////////////////////////////////////////////////////////////
 void DataOutStream(chanend c_in) {
   int i = 0;
   while (1) {
@@ -419,8 +412,7 @@ void DataOutStream(chanend c_in) {
         }
       }
       _writeoutline(line, IMWD);
-      if (!(y % 5))
-          printf("DataOutStream: Line %d written\n ", y);
+      if (!(y % 5)) printf("DataOutStream: Line %d written\n ", y); // print every 5th line output
     }
 
     //Close the PGM image
@@ -459,15 +451,15 @@ void orientation(client interface i2c_master_if i2c, chanend toDist) {
     //get new x-axis tilt value
     int x = read_acceleration(i2c, FXOS8700EQ_OUT_X_MSB);
 
-    if (!tilted) {
-      if (x > 30) {
-        tilted = 1 - tilted;
-        toDist <: 1;
+    if (!tilted) { // if the board was not previously tilted
+      if (x > 30) { // if the board is now tilted
+        tilted = 1 - tilted; // set it to tilted
+        toDist <: 1; // send 1 to the distributer as the board is now tilted
       }
-    } else {
-      if (x <= 30) {
-        tilted = 1 - tilted;
-        toDist <: 0;
+    } else { // if the board was previously tilted
+      if (x <= 30) { // if the board is no longer tilted
+        tilted = 1 - tilted; // set it to not tilted
+        toDist <: 0; // send 0 to the distributer as the board is now not tilted anymore
       }
     }
   }
@@ -489,9 +481,6 @@ int main(void) {
     par (int i = 0; i < WORKERS; i++)  {
       on tile[1] : worker(workers[i], i);
     }
-//    par (int j = WORKERS-WORKERS2; j < WORKERS; j++)  {
-//      on tile[0] : worker(workers[j], j);
-//    }
   }
   return 0;
 }

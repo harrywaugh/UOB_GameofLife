@@ -1128,12 +1128,12 @@
 <fCall name="_openinpgm" global="true" numArgs="2">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1288"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1288"/></value>
     </values>
   </arg>
 </fCall>
@@ -1152,7 +1152,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1288"/></value>
     </values>
   </arg>
 </fCall>
@@ -1230,12 +1230,12 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1288"/></value>
     </values>
   </arg>
   <arg num="2">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1288"/></value>
     </values>
   </arg>
 </fCall>
@@ -1405,12 +1405,12 @@
 <fCall name="_openoutpgm" global="true" numArgs="3">
   <arg num="0">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1288"/></value>
     </values>
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1288"/></value>
     </values>
   </arg>
   <arg num="2">
@@ -1434,7 +1434,7 @@
   </arg>
   <arg num="1">
     <values>
-      <value type="intval"><intval isSigned="true" val="1264"/></value>
+      <value type="intval"><intval isSigned="true" val="1288"/></value>
     </values>
   </arg>
 </fCall>
